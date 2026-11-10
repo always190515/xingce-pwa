@@ -1,7 +1,7 @@
 {
-  "name": "行测考点浏览器（2025+2026）",
+  "name": "行测考点浏览器（2024–2026）",
   "short_name": "行测考点",
-  "description": "行测真题蒸馏全库 3370 题 · 离线可刷 · 云端同步",
+  "description": "行测真题蒸馏全库 5396 题 · 离线可刷 · 云端同步",
   "start_url": "./?pin=1905",
   "scope": "./",
   "display": "standalone",

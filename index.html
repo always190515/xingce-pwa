@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
-<title>行测考点浏览器 v4 PWA（2025 + 2026）</title>
+<title>行测考点浏览器 v4 PWA（2024 + 2025 + 2026）</title>
 <style>
   :root { --ink:#1c2733; --sub:#5b6b7b; --line:#e3e8ee; --bg:#f6f8fa; --card:#fff;
           --accent:#0f6ea8; --accent2:#e8f1f8; --warn:#b45309; --warnbg:#fef3c7;
@@ -156,7 +156,7 @@
 <header>
   <div class="hrow">
     <button id="navToggle">☰ 目录</button>
-    <h1>行测考点浏览器 <span>· 全库 3370 题（2025 + 2026）· 含 863 道图片题 · PWA 离线云同步版</span></h1>
+    <h1>行测考点浏览器 <span>· 全库 5396 题（2024 + 2025 + 2026）· 含 1330 道图片题 · PWA 离线云同步版</span></h1>
   </div>
   <div class="stats" id="stats"></div>
   <div class="searchbar">
@@ -180,7 +180,7 @@
   <main>
     <div class="crumb" id="crumb"></div>
     <div class="hint" id="hint"></div>
-    <div id="list"><div class="empty">正在加载 3,370 道真题数据…</div></div>
+    <div id="list"><div class="empty">正在加载 5396 道真题数据…</div></div>
   </main>
 </div>
 <div id="lightbox"><img id="lightboxImg" alt="题面原图"></div>
@@ -989,7 +989,7 @@ $('cacheImgBtn').onclick = async () => {
   const btn = $('cacheImgBtn');
   btn.disabled = true;
   try {
-    const cache = await caches.open('xingce-pwa-img-v4.1');
+    const cache = await caches.open('xingce-pwa-img-v4.2');
     let done = 0;
     const batch = 24;
     for (let i = 0; i < keys.length; i += batch) {
