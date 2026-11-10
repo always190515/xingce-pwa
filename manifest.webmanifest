@@ -1,0 +1,22 @@
+{
+  "name": "行测考点浏览器（2025+2026）",
+  "short_name": "行测考点",
+  "description": "行测真题蒸馏全库 3370 题 · 离线可刷 · 云端同步",
+  "start_url": "./?pin=1905",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f8fa",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="行测考点">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<title>行测考点浏览器 v4 PWA（2025 + 2026）</title>
+<style>
+  :root { --ink:#1c2733; --sub:#5b6b7b; --line:#e3e8ee; --bg:#f6f8fa; --card:#fff;
+          --accent:#0f6ea8; --accent2:#e8f1f8; --warn:#b45309; --warnbg:#fef3c7;
+          --ok:#047857; --okbg:#ecfdf5; }
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  body { font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+         color:var(--ink); background:var(--bg); font-size:14px;
+         padding-bottom:env(safe-area-inset-bottom); }
+  header { background:var(--card); border-bottom:1px solid var(--line);
+           padding:calc(10px + env(safe-area-inset-top)) 16px 10px; position:sticky; top:0; z-index:20; }
+  .hrow { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  #navToggle { padding:6px 12px; border:1px solid var(--line); background:var(--bg); border-radius:7px;
+               cursor:pointer; font-size:13px; color:var(--ink); white-space:nowrap; }
+  #navToggle:hover { border-color:var(--accent); color:var(--accent); }
+  header h1 { font-size:16.5px; font-weight:600; flex:1; min-width:180px; }
+  header h1 span { font-weight:400; color:var(--sub); font-size:12px; }
+  header .stats { display:flex; gap:14px; margin:7px 0 0; flex-wrap:wrap; color:var(--sub); font-size:12px; }
+  header .stats b { color:var(--ink); font-size:14px; margin-right:2px; }
+  .searchbar { margin-top:8px; display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .searchbar input[type="search"] { flex:1; min-width:200px; max-width:520px; padding:7px 11px; border:1px solid var(--line); border-radius:8px; font-size:14px; background:var(--card); color:var(--ink); }
+  .searchbar input[type="search"]:focus { outline:2px solid var(--accent2); border-color:var(--accent); }
+  .tbtn { padding:6px 10px; border:1px solid var(--line); background:var(--card); border-radius:7px; cursor:pointer;
+          font-size:12.5px; color:var(--ink); white-space:nowrap; user-select:none; }
+  .tbtn:hover { border-color:var(--accent); color:var(--accent); }
+  .tbtn.on, .tbtn.on:hover { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .tbtn.sync-ok { border-color:#a7f3d0; background:var(--okbg); color:var(--ok); }
+  .tbtn.sync-busy { border-color:#fde68a; background:var(--warnbg); color:var(--warn); }
+  .layout { display:flex; min-height:calc(100vh - 150px); }
+  nav { width:275px; flex-shrink:0; background:var(--card); border-right:1px solid var(--line);
+        padding:8px 0 24px; overflow-y:auto; max-height:calc(100vh - 140px); position:sticky; top:140px; align-self:flex-start; }
+  nav.closed { display:none; }
+  .nd { display:flex; align-items:center; gap:6px; padding:7px 12px; cursor:pointer; font-size:13.5px; color:var(--ink); }
+  .nd:hover { background:var(--accent2); }
+  .nd.on { background:var(--accent2); color:var(--accent); font-weight:600; }
+  .nd .caret { width:14px; text-align:center; color:var(--sub); font-size:10px; flex-shrink:0; }
+  .nd .dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .nd .nm { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .nd .n { color:var(--sub); font-size:11.5px; font-weight:400; flex-shrink:0; }
+  .nd.l2 { padding-left:30px; }
+  .nd.l3 { padding-left:48px; font-size:12.5px; }
+  .nd.l3 .nm { color:var(--sub); }
+  .nd.l3.on .nm { color:var(--accent); }
+  main { flex:1; padding:14px 18px; max-width:1000px; min-width:0; }
+  .crumb { color:var(--sub); font-size:13px; margin-bottom:8px; }
+  .crumb .cseg { cursor:pointer; color:var(--ink); font-weight:600; }
+  .crumb .cseg:hover { color:var(--accent); }
+  .hint { color:var(--sub); font-size:12px; margin-bottom:10px; line-height:1.5; }
+  .qcard { background:var(--card); border:1px solid var(--line); border-radius:10px; margin-bottom:10px; overflow:hidden; }
+  .qhead { padding:11px 14px; cursor:pointer; }
+  .qhead:hover { background:#fafcfe; }
+  .qhead .meta { display:flex; gap:7px; align-items:center; margin-bottom:6px; flex-wrap:wrap; }
+  .tag { font-size:11.5px; background:var(--accent2); color:var(--accent); border-radius:5px; padding:1px 7px; }
+  .tag.doubt { background:var(--warnbg); color:var(--warn); }
+  .tag.imgq { background:var(--okbg); color:var(--ok); }
+  .ans-hidden { font-size:11.5px; color:var(--sub); background:var(--bg); border:1px dashed var(--line); border-radius:5px; padding:1px 7px; }
+  .tag.ok { background:var(--okbg); color:var(--ok); }
+  .tag.bad { background:#fee2e2; color:#b91c1c; }
+  .tag.seen { background:var(--bg); color:var(--sub); }
+  .tag.st { background:#eef2f7; color:#475569; }
+  .favg { border:none; background:none; cursor:pointer; font-size:17px; line-height:1;
+          padding:2px 4px; color:#b6c2ce; flex-shrink:0; margin-left:auto; }
+  .favg:hover, .favg.on { color:#f59e0b; }
+  .popt { display:flex; gap:8px; align-items:flex-start; padding:10px 12px; border:1px solid var(--line); border-radius:8px;
+          margin-top:7px; cursor:pointer; font-size:14px; line-height:1.6; background:#fff; }
+  .popt:hover { border-color:var(--accent); background:var(--accent2); }
+  .popt b { flex-shrink:0; }
+  .popt.sel { border-color:var(--accent); background:var(--accent2); box-shadow:inset 0 0 0 1px var(--accent); }
+  .popt.correct, .popt.correct:hover { border-color:var(--ok); background:var(--okbg); }
+  .popt.wrong, .popt.wrong:hover { border-color:#dc2626; background:#fef2f2; }
+  .popt.dim, .popt.dim:hover { border-color:var(--line); background:#fff; opacity:.55; }
+  .popt.locked { cursor:default; }
+  .psubmit, .predo { margin-top:9px; margin-right:8px; padding:7px 14px; border-radius:7px; cursor:pointer; font-size:13px; }
+  .psubmit { border:1px solid var(--accent); background:var(--accent); color:#fff; }
+  .psubmit:disabled { opacity:.35; cursor:not-allowed; }
+  .predo { border:1px solid var(--line); background:var(--card); color:var(--ink); }
+  .predo:hover { border-color:var(--accent); color:var(--accent); }
+  .preveal { margin-top:9px; padding:7px 4px; border:none; background:none; color:var(--sub); font-size:12.5px; cursor:pointer; text-decoration:underline; }
+  .preveal:hover { color:var(--accent); }
+  .pfb { margin-bottom:10px; padding:9px 12px; border-radius:8px; font-size:13.5px; font-weight:600; }
+  .pfb.ok { background:var(--okbg); color:var(--ok); }
+  .pfb.no { background:#fef2f2; color:#b91c1c; }
+  .pfb.seen { background:var(--bg); color:var(--sub); }
+  .qhead .src { color:var(--sub); font-size:11.5px; }
+  .qhead .stem { font-size:14px; line-height:1.62; color:var(--ink); }
+  .qhead .optline { margin-top:6px; font-size:12.5px; color:var(--sub); line-height:1.7; }
+  .qhead .thumb { margin-top:8px; max-height:88px; max-width:260px; border:1px solid var(--line); border-radius:6px; display:block; }
+  .qbody { display:none; border-top:1px dashed var(--line); padding:12px 14px; background:#fbfcfd; }
+  .qcard.open .qbody { display:block; }
+  .sec { margin-bottom:12px; }
+  .sec h4 { font-size:12.5px; color:var(--accent); margin-bottom:5px; font-weight:600; }
+  .sec p, .sec li { font-size:13.5px; line-height:1.65; color:#33414f; }
+  .sec ol { padding-left:20px; }
+  .sec ul { padding-left:18px; }
+  .feats { display:flex; flex-wrap:wrap; gap:5px; }
+  .feats span { font-size:11.5px; background:var(--bg); border:1px solid var(--line); color:var(--sub); border-radius:5px; padding:1px 7px; }
+  .ansbig { font-weight:700; color:var(--ok); font-size:16px; }
+  .mixrow { font-size:13px; line-height:1.65; }
+  .mixrow b { color:var(--ink); }
+  .imgwrap { display:flex; flex-wrap:wrap; gap:10px; }
+  .imgwrap img { max-width:100%; max-height:420px; border:1px solid var(--line); border-radius:8px; cursor:zoom-in; background:#fff; }
+  .md h5 { font-size:13px; margin:6px 0 3px; color:var(--ink); }
+  .md table { border-collapse:collapse; margin:6px 0; font-size:12.5px; background:#fff; display:block; overflow-x:auto; }
+  .md th, .md td { border:1px solid var(--line); padding:3px 9px; text-align:left; line-height:1.5; }
+  .md th { background:var(--accent2); color:var(--ink); font-weight:600; white-space:nowrap; }
+  .md tr:nth-child(even) td { background:#f8fafc; }
+  .md hr { border:none; border-top:1px solid var(--line); margin:8px 0; }
+  .md .mmark { font-size:12.5px; color:var(--accent); font-weight:600; margin:4px 0; }
+  .md p { font-size:13px; line-height:1.6; color:#33414f; margin:2px 0; }
+  .inl { vertical-align:middle; margin:2px 3px; border:1px solid var(--line); border-radius:4px; background:#fff; }
+  .inl.f { height:auto; max-height:44px; max-width:240px; }
+  .inl.q { max-height:170px; max-width:170px; }
+  .qhead .inl.f { height:auto; max-height:40px; max-width:220px; }
+  .qhead .inl.q { max-height:64px; max-width:150px; }
+  .opts-full div { font-size:13.5px; line-height:1.7; color:var(--ink); }
+  .math { font-family:"STIX Two Math","Cambria Math",Georgia,serif; }
+  sub, sup { font-size:10px; }
+  details.guan { border:1px solid var(--line); border-radius:8px; background:#fff; padding:0 12px; margin-bottom:12px; }
+  details.guan summary { cursor:pointer; font-size:12.5px; color:var(--sub); padding:8px 0; user-select:none; }
+  details.guan[open] summary { border-bottom:1px dashed var(--line); margin-bottom:8px; color:var(--accent); }
+  details.guan .md { padding-bottom:8px; }
+  details.guan.doubt summary { color:var(--warn); }
+  details.guan.doubt[open] summary { color:var(--warn); border-bottom-color:#fde68a; }
+  details.guan.doubt p { padding-bottom:8px; }
+  .gimgsec { padding:2px 0 10px; }
+  .gimgcap { font-size:12.5px; color:var(--accent); margin:4px 0 6px; }
+  .imgwrap.gimgs img { max-height:64px; max-width:64px; }
+  .empty { color:var(--sub); padding:36px 0; text-align:center; }
+  #lightbox { display:none; position:fixed; inset:0; background:rgba(15,23,32,.9); z-index:99; cursor:zoom-out; align-items:center; justify-content:center; }
+  #lightbox img { max-width:94vw; max-height:94vh; }
+  #toast { position:fixed; left:50%; bottom:calc(24px + env(safe-area-inset-bottom)); transform:translateX(-50%) translateY(16px);
+           background:#1c2733; color:#fff; border-radius:8px; padding:10px 16px; font-size:13px;
+           opacity:0; pointer-events:none; transition:opacity .25s, transform .25s; z-index:100; max-width:90vw; text-align:center; }
+  #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  @media (max-width: 760px) {
+    .layout { flex-direction:column; }
+    nav { width:100%; max-height:48vh; position:static; border-right:none; border-bottom:1px solid var(--line); }
+    main { padding:10px; }
+    header h1 span { display:none; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="hrow">
+    <button id="navToggle">☰ 目录</button>
+    <h1>行测考点浏览器 <span>· 全库 3370 题（2025 + 2026）· 含 863 道图片题 · PWA 离线云同步版</span></h1>
+  </div>
+  <div class="stats" id="stats"></div>
+  <div class="searchbar">
+    <input id="q" type="search" placeholder="搜索：考点 / 提问 / 特征 / 题干 / 推理链 / 最快解法 / qid">
+    <button class="tbtn" id="modeBtn" title="切换背题/练习模式">✏️ 练习模式</button>
+    <button class="tbtn" id="onlyWrong" aria-pressed="false" title="只看错题并反复重刷">📕 错题重刷</button>
+    <button class="tbtn" id="onlyFav" aria-pressed="false" title="只看收藏的题">★ 只看收藏</button>
+    <button class="tbtn" id="onlyImg" aria-pressed="false" title="只看含原图的题">只看图片题</button>
+    <button class="tbtn" id="onlyDoubt" aria-pressed="false" title="只看有疑点标记的题">只看疑点题</button>
+    <span id="yearBtns" style="display:flex;gap:6px"></span>
+    <button class="tbtn" id="shuffle" aria-pressed="false" title="打乱当前列表顺序">🎲 随机打乱</button>
+    <button class="tbtn" id="syncBtn" title="点击立即同步云端进度，或配置同步口令">☁️ 云同步</button>
+    <button class="tbtn" id="cacheImgBtn" title="一键把全库题图缓存到本机，无网也能看所有图">📦 缓存题图</button>
+    <button class="tbtn" id="saveBtn" title="导出进度 JSON 备份">💾 导出进度</button>
+    <button class="tbtn" id="importBtn" title="从旧版 HTML 或进度 JSON 导入收藏与错题计数">⬆ 导入</button>
+    <input id="importFile" type="file" accept=".html,.htm,.json,text/html,application/json" style="display:none">
+  </div>
+</header>
+<div class="layout">
+  <nav id="nav"></nav>
+  <main>
+    <div class="crumb" id="crumb"></div>
+    <div class="hint" id="hint"></div>
+    <div id="list"><div class="empty">正在加载 3,370 道真题数据…</div></div>
+  </main>
+</div>
+<div id="lightbox"><img id="lightboxImg" alt="题面原图"></div>
+<div id="toast"></div>
+<script id="progressStore" type="application/json">{}</script>
+<script id="syncBundle" type="application/json">{"salt":"ziM84MfPh7ijxVBLSWTS5Q==","verify":"5274cd59437939cf61cf46df43e9ce20810a480a459581848d788ced555016c4","ct":"uDsHPNrcPOvmfexAkPCjmQrixCH2GRavHK0oV67Lt30VlUMd1WfQQq+gRTlZ+VF74700Q4TphxM/QzY6Nvheo0TkvIgjHIzvMPOJo1ZOfcnoTqRC4gomkVDjgaek8rI4","gistId":"b93fb51bca84779f5298bc2f3700e8f1"}</script>
+<script>
+let DATA = [], MATS = {}, IMGKIND = {}, ALLYEARS = [], MODULES = [];
+const TOK = /⟦img:([a-f0-9]{10})⟧/g;
+const imgUrl = k => `imgs/${k}.webp`;
+const ii = h => h.replace(TOK, (_, k) =>
+  `<img class="inl ${IMGKIND[k]==='f'?'f':'q'}" src="${imgUrl(k)}" alt="${IMGKIND[k]==='f'?'公式':'图'}" loading="lazy">`);
+
+function smartCut(s, n) {
+  if (s.length <= n) return s;
+  let cut = s.slice(0, n);
+  const last = cut.lastIndexOf('⟦');
+  if (last >= 0 && cut.indexOf('⟧', last) < 0) cut = cut.slice(0, last);
+  return cut.replace(/\s+$/, '') + '…';
+}
+
+const MODCOLOR = { "政治理论":"#8b5cf6", "常识判断":"#0d9488", "言语理解与表达":"#d97706",
+                   "数量关系":"#dc2626", "判断推理":"#0f6ea8", "资料分析":"#4d7c0f" };
+const state = { mod:null, t2:null, t3:null, q:'', onlyDoubt:false, onlyImg:false, year:null,
+                openMod:null, openT2:null, navOpen:window.innerWidth > 760, shuffled:false, order:null,
+                practice:false, answers:{}, onlyFav:false, onlyWrong:false, limit:60 };
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s??'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+let toastTimer = null;
+function toast(msg, ms = 2800) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), ms);
+}
+
+// ---------- 三层持久化：localStorage + IndexedDB + GitHub Secret Gist ----------
+const PKEY = 'xingce.explorer.progress.v1';
+const SKEY = 'xingce.explorer.sync.v1';
+const IDB_NAME = 'xingce_pwa_db';
+const IDB_STORE = 'kv';
+
+function idbOpen() {
+  return new Promise((resolve, reject) => {
+    if (!window.indexedDB) return reject(new Error('no idb'));
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(IDB_STORE);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function idbGet(k) {
+  try {
+    const db = await idbOpen();
+    return await new Promise((res, rej) => {
+      const tx = db.transaction(IDB_STORE, 'readonly').objectStore(IDB_STORE).get(k);
+      tx.onsuccess = () => res(tx.result || null);
+      tx.onerror = () => rej(tx.error);
+    });
+  } catch (e) { return null; }
+}
+async function idbSet(k, v) {
+  try {
+    const db = await idbOpen();
+    await new Promise((res, rej) => {
+      const tx = db.transaction(IDB_STORE, 'readwrite');
+      tx.objectStore(IDB_STORE).put(v, k);
+      tx.oncomplete = () => res();
+      tx.onerror = () => rej(tx.error);
+    });
+  } catch (e) {}
+}
+
+function mergeProgObjects(target, incoming) {
+  if (!incoming || typeof incoming !== 'object') return false;
+  let changed = false;
+  for (const [qid, rc] of Object.entries(incoming.rec || {})) {
+    if (!rc || typeof rc !== 'object') continue;
+    const n = Math.max(0, Number(rc.n) || 0);
+    const w = Math.max(0, Number(rc.w) || 0);
+    if (!n && !w) continue;
+    const cur = target.rec[qid];
+    if (!cur) {
+      target.rec[qid] = { n, w };
+      if (rc.last !== undefined) target.rec[qid].last = rc.last;
+      changed = true;
+    } else {
+      if (n > (Number(cur.n) || 0)) { cur.n = n; changed = true; }
+      if (w > (Number(cur.w) || 0)) { cur.w = w; changed = true; }
+      if (rc.last !== undefined && ((incoming.ts || 0) >= (target.ts || 0) || !cur.last)) {
+        if (cur.last !== rc.last) { cur.last = rc.last; changed = true; }
+      }
+    }
+  }
+  const inFavs = Array.isArray(incoming.favs) ? incoming.favs : [];
+  for (const qid of inFavs) {
+    if (!FAVS.has(qid)) { FAVS.add(qid); changed = true; }
+  }
+  target.favs = [...FAVS];
+  if ((incoming.ts || 0) > (target.ts || 0)) target.ts = incoming.ts;
+  return changed;
+}
+
+function loadInitialProg() {
+  let emb = null, loc = null;
+  try { emb = JSON.parse($('progressStore').textContent); } catch (e) {}
+  try { loc = JSON.parse(localStorage.getItem(PKEY) || 'null'); } catch (e) {}
+  const p = (loc && (loc.ts || 0) >= ((emb && emb.ts) || 0)) ? loc : (emb || { ts: 0 });
+  if (!p.favs) p.favs = [];
+  if (!p.rec) p.rec = {};
+  for (const rc of Object.values(p.rec)) { if (rc && 'rm' in rc) delete rc.rm; }
+  return p;
+}
+
+const PROG = loadInitialProg();
+const FAVS = new Set(PROG.favs);
+
+let syncConfig = null;
+try { syncConfig = JSON.parse(localStorage.getItem(SKEY) || 'null'); } catch (e) {}
+
+let syncTimer = null;
+function persist(triggerCloud = true) {
+  PROG.ts = Date.now();
+  PROG.favs = [...FAVS];
+  try { localStorage.setItem(PKEY, JSON.stringify(PROG)); } catch (e) {}
+  idbSet(PKEY, PROG);
+  if (triggerCloud && syncConfig && syncConfig.token) {
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(() => cloudPush(false), 1200);
+  }
+}
+
+// ---------- PBKDF2 解密同步凭证与 Gist 同步 ----------
+async function unlockWithPin(pin) {
+  let bundle = null;
+  try { bundle = JSON.parse($('syncBundle').textContent); } catch (e) {}
+  if (!bundle || !bundle.ct || !window.crypto || !crypto.subtle) return null;
+  const salt = Uint8Array.from(atob(bundle.salt), c => c.charCodeAt(0));
+  const ct = Uint8Array.from(atob(bundle.ct), c => c.charCodeAt(0));
+  const enc = new TextEncoder();
+  const baseKey = await crypto.subtle.importKey('raw', enc.encode(String(pin).trim()), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+    baseKey,
+    (32 + ct.length) * 8
+  );
+  const dk = new Uint8Array(bits);
+  const verifyHex = Array.from(dk.slice(0, 32)).map(b => b.toString(16).padStart(2, '0')).join('');
+  if (verifyHex !== bundle.verify) return null;
+  const plainBytes = new Uint8Array(ct.length);
+  for (let i = 0; i < ct.length; i++) plainBytes[i] = ct[i] ^ dk[32 + i];
+  const cfg = JSON.parse(new TextDecoder().decode(plainBytes));
+  syncConfig = cfg;
+  try { localStorage.setItem(SKEY, JSON.stringify(cfg)); } catch (e) {}
+  await idbSet(SKEY, cfg);
+  updateSyncBtn('ok');
+  return cfg;
+}
+
+function updateSyncBtn(status) {
+  const b = $('syncBtn');
+  if (!b) return;
+  b.classList.remove('sync-ok', 'sync-busy');
+  if (status === 'busy') {
+    b.classList.add('sync-busy');
+    b.textContent = '☁️ 同步中…';
+  } else if (syncConfig && syncConfig.token) {
+    b.classList.add('sync-ok');
+    b.textContent = '☁️ 已同步';
+  } else {
+    b.textContent = '☁️ 云同步';
+  }
+}
+
+async function cloudPull(silent = true) {
+  if (!syncConfig || !syncConfig.gistId) return false;
+  try {
+    if (!silent) updateSyncBtn('busy');
+    const headers = { 'Accept': 'application/vnd.github+json' };
+    if (syncConfig.token) headers['Authorization'] = `Bearer ${syncConfig.token}`;
+    const resp = await fetch(`https://api.github.com/gists/${syncConfig.gistId}?t=${Date.now()}`, { headers, cache: 'no-store' });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const g = await resp.json();
+    const file = g.files && g.files['xingce-progress.json'];
+    if (file && file.content) {
+      const remote = JSON.parse(file.content);
+      const changed = mergeProgObjects(PROG, remote);
+      if (changed) {
+        try { localStorage.setItem(PKEY, JSON.stringify(PROG)); } catch (e) {}
+        await idbSet(PKEY, PROG);
+        if (DATA.length) { renderStats(); renderList(); }
+      }
+    }
+    updateSyncBtn('ok');
+    if (!silent) toast('云端进度已同步（收藏 ' + FAVS.size + '，错题 ' + Object.values(PROG.rec).filter(r => r.w > 0).length + '）');
+    return true;
+  } catch (e) {
+    updateSyncBtn();
+    if (!silent) toast('云同步拉取失败：' + e.message);
+    return false;
+  }
+}
+
+async function cloudPush(manual = false) {
+  if (!syncConfig || !syncConfig.gistId || !syncConfig.token) return false;
+  try {
+    updateSyncBtn('busy');
+    // 先拉取合并一次，防止多端覆盖
+    await cloudPull(true);
+    const resp = await fetch(`https://api.github.com/gists/${syncConfig.gistId}`, {
+      method: 'PATCH',
+      headers: {
+        'Accept': 'application/vnd.github+json',
+        'Authorization': `Bearer ${syncConfig.token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        files: {
+          'xingce-progress.json': { content: JSON.stringify(PROG) }
+        }
+      })
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    updateSyncBtn('ok');
+    if (manual) toast('✓ 已同步到云端（收藏 ' + FAVS.size + '，错题 ' + Object.values(PROG.rec).filter(r => r.w > 0).length + '）');
+    return true;
+  } catch (e) {
+    updateSyncBtn();
+    if (manual) toast('云端写入失败：' + e.message);
+    return false;
+  }
+}
+
+async function initStorageAndSync() {
+  const idbProg = await idbGet(PKEY);
+  if (idbProg && mergeProgObjects(PROG, idbProg) && DATA.length) {
+    renderStats(); renderList();
+  }
+  if (!syncConfig) {
+    const idbSync = await idbGet(SKEY);
+    if (idbSync && idbSync.token) {
+      syncConfig = idbSync;
+      try { localStorage.setItem(SKEY, JSON.stringify(syncConfig)); } catch (e) {}
+    }
+  }
+  // 检查 URL 参数 ?pin=xxxx 或 #pin=xxxx（默认 start_url 自带 ?pin=1905，主屏幕启动自动免密解锁）
+  const urlParams = new URLSearchParams(window.location.search);
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  const pinParam = urlParams.get('pin') || hashParams.get('pin') || '1905';
+  if (!syncConfig && pinParam) {
+    await unlockWithPin(pinParam);
+  }
+  if (urlParams.has('pin') || hashParams.has('pin')) {
+    const cleanUrl = window.location.pathname;
+    try { history.replaceState(null, '', cleanUrl); } catch (e) {}
+  }
+  updateSyncBtn();
+  if (syncConfig && syncConfig.gistId) {
+    await cloudPull(true);
+  }
+}
+
+// ---------- LaTeX 轻量渲染 ----------
+function mathInline(m) {
+  return m
+    .replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&')
+    .replace(/\\hat\{y\}/g,'ŷ').replace(/\\hat\{([^{}]+)\}/g,'$1̂')
+    .replace(/\\frac\{([^{}]+)\}\\{([^{}]+)\}/g,'($1)/($2)')
+    .replace(/\\times/g,'×').replace(/\\cdot/g,'·').replace(/\\pm/g,'±')
+    .replace(/\\approx/g,'≈').replace(/\\neq/g,'≠').replace(/\\leq/g,'≤')
+    .replace(/\\geq/g,'≥').replace(/\\% ?/g,'%').replace(/\\,/g,' ')
+    .replace(/\^\{([^{}]+)\}/g,'<sup>$1</sup>').replace(/\^(\w)/g,'<sup>$1</sup>')
+    .replace(/_\{([^{}]+)\}/g,'<sub>$1</sub>').replace(/_(\w)/g,'<sub>$1</sub>')
+    .replace(/[{}]/g,'');
+}
+const tex = s => esc(s).replace(/\$([^$]+)\$/g, (_, m) => '<span class="math">' + mathInline(m) + '</span>');
+
+// ---------- OCR 文本 markdown 渲染 ----------
+function md(src) {
+  if (!src) return '';
+  const lines = esc(src).split('\n');
+  let out = '', i = 0;
+  const flushP = buf => { if (buf.length) out += '<p>' + buf.join('<br>') + '</p>'; };
+  let pbuf = [];
+  while (i < lines.length) {
+    const line = lines[i];
+    const t = line.trim();
+    if (!t) { flushP(pbuf); pbuf = []; i++; continue; }
+    if (/^\|/.test(t)) {
+      flushP(pbuf); pbuf = [];
+      const rows = [];
+      while (i < lines.length && /^\|/.test(lines[i].trim())) { rows.push(lines[i].trim()); i++; }
+      const cells = r => r.replace(/^\|/,'').replace(/\|$/,'').split('|').map(c => c.trim());
+      let h = '<table>';
+      const head = cells(rows[0]);
+      h += '<tr>' + head.map(c => '<th>' + tex(c) + '</th>').join('') + '</tr>';
+      for (let j = 1; j < rows.length; j++) {
+        if (/^\|[\s:\-|]+\|?$/.test(rows[j])) continue;
+        h += '<tr>' + cells(rows[j]).map(c => '<td>' + tex(c) + '</td>').join('') + '</tr>';
+      }
+      out += h + '</table>';
+      continue;
+    }
+    if (/^#{1,6}\s/.test(t)) { flushP(pbuf); pbuf = []; out += '<h5>' + tex(t.replace(/^#{1,6}\s*/, '')) + '</h5>'; i++; continue; }
+    if (/^-{3,}$/.test(t)) { flushP(pbuf); pbuf = []; out += '<hr>'; i++; continue; }
+    if (/^【[^】]+】$/.test(t)) { flushP(pbuf); pbuf = []; out += '<div class="mmark">' + t + '</div>'; i++; continue; }
+    if (/^[-•*]\s+/.test(t)) {
+      flushP(pbuf); pbuf = [];
+      out += '<ul>';
+      while (i < lines.length && /^[-•*]\s+/.test(lines[i].trim())) { out += '<li>' + tex(lines[i].trim().replace(/^[-•*]\s+/, '')) + '</li>'; i++; }
+      out += '</ul>';
+      continue;
+    }
+    pbuf.push(tex(t));
+    i++;
+  }
+  flushP(pbuf);
+  return out;
+}
+
+// ---------- 过滤 ----------
+function hay(r) {
+  if (!r._hay) {
+    r._hay = [r.qid, r.t2, r.t3, r.stem, r.tmap, r.ask, r.wen, r.fast, r.muti, r.bound,
+              r.feat.join(' '), r.chain.join(' '), r.cuo.join(' '),
+              Object.values(r.opts).join(' ')].join(' ').toLowerCase();
+  }
+  return r._hay;
+}
+function pass(r) {
+  if (state.year && r.yr !== state.year) return false;
+  if (state.onlyDoubt && !r.doubt) return false;
+  if (state.onlyImg && !r.iq) return false;
+  if (state.onlyFav && !FAVS.has(r.qid)) return false;
+  if (state.onlyWrong) { const rc = PROG.rec[r.qid]; if (!rc || !(rc.w > 0)) return false; }
+  if (state.q && !state.q.toLowerCase().split(/\s+/).every(w => hay(r).includes(w))) return false;
+  if (state.t3) return r.t3 === state.t3;
+  if (state.t2) return r.t2 === state.t2;
+  if (state.mod) return r.mod === state.mod;
+  return true;
+}
+
+function renderStats() {
+  const scope = state.year ? DATA.filter(r => r.yr === state.year) : DATA;
+  const t3s = new Set(scope.map(r => r.t3)).size;
+  const t2s = new Set(scope.map(r => r.t2)).size;
+  const doubts = scope.filter(r => r.doubt).length;
+  const juans = new Set(scope.map(r => r.yr + '|' + r.juan)).size;
+  const imgq = scope.filter(r => r.iq).length;
+  const favn = FAVS.size;
+  const wrongn = Object.values(PROG.rec).filter(rc => rc && rc.w > 0).length;
+  const yearSeg = ALLYEARS.map(y => {
+    const n = DATA.filter(r => r.yr === y).length;
+    return `<span style="color:${state.year===y?'var(--accent)':'var(--sub)'}">${y} <b>${n}</b></span>`;
+  }).join('<span style="color:var(--line)">｜</span>');
+  $('stats').innerHTML =
+    `<span><b>${scope.length}</b>题${state.year?`（${state.year}）`:''}</span>` +
+    `<span>${yearSeg}</span>` +
+    `<span><b>${t2s}</b>种题型</span><span><b>${t3s}</b>个考点</span>` +
+    `<span><b>${imgq}</b>道图片题</span><span><b>${doubts}</b>条疑点</span><span><b>${juans}</b>套卷</span>` +
+    `<span>★ <b>${favn}</b>收藏</span><span>📕 <b>${wrongn}</b>错题</span>`;
+}
+
+function counts(key, scope) {
+  const m = {};
+  (scope || DATA).forEach(r => m[r[key]] = (m[r[key]]||0)+1);
+  return Object.entries(m).sort((a,b)=>b[1]-a[1]);
+}
+
+// ---------- 三级目录树 ----------
+function renderNav() {
+  const base = state.year ? DATA.filter(r => r.yr === state.year) : DATA;
+  let h = `<div class="nd ${!state.mod?'on':''}" data-act="all"><span class="caret"></span><span class="nm">全部题库${state.year?`（${state.year}）`:''}</span><span class="n">${base.length}</span></div>`;
+  for (const m of MODULES) {
+    const mrows = base.filter(r => r.mod === m);
+    if (!mrows.length) continue;
+    const open = state.openMod === m;
+    const on = state.mod === m;
+    h += `<div class="nd ${on&&!state.t2&&!state.t3?'on':''}" data-act="mod" data-mod="${esc(m)}">
+      <span class="caret">${open?'▾':'▸'}</span><span class="dot" style="background:${MODCOLOR[m]||'#94a3b8'}"></span>
+      <span class="nm">${esc(m)}</span><span class="n">${mrows.length}</span></div>`;
+    if (open) {
+      for (const [t2,c] of counts('t2', mrows)) {
+        const t2rows = mrows.filter(r => r.t2 === t2);
+        const open2 = state.openT2 === t2;
+        h += `<div class="nd l2 ${state.t2===t2&&!state.t3?'on':''}" data-act="t2" data-t2="${esc(t2)}" data-mod="${esc(m)}">
+          <span class="caret">${open2?'▾':'▸'}</span><span class="nm">${esc(t2)}</span><span class="n">${c}</span></div>`;
+        if (open2) {
+          for (const [t3,c3] of counts('t3', t2rows)) {
+            h += `<div class="nd l3 ${state.t3===t3?'on':''}" data-act="t3" data-t3="${esc(t3)}" data-t2="${esc(t2)}" data-mod="${esc(m)}">
+              <span class="caret"></span><span class="nm" title="${esc(t3)}">${esc(t3)}</span><span class="n">${c3}</span></div>`;
+          }
+        }
+      }
+    }
+  }
+  $('nav').innerHTML = h;
+  $('nav').classList.toggle('closed', !state.navOpen);
+  $('navToggle').textContent = state.navOpen ? '✕ 收起目录' : '☰ 目录';
+  $('nav').querySelectorAll('.nd').forEach(el => el.onclick = e => {
+    e.stopPropagation();
+    const act = el.dataset.act;
+    if (act === 'all') {
+      state.mod = null; state.t2 = null; state.t3 = null;
+      state.openMod = null; state.openT2 = null;
+      if (window.innerWidth <= 760) state.navOpen = false;
+    } else if (act === 'mod') {
+      const m = el.dataset.mod;
+      if (state.mod === m && !state.t2 && !state.t3) {
+        state.openMod = state.openMod === m ? null : m;
+      } else {
+        state.mod = m; state.t2 = null; state.t3 = null; state.openMod = m;
+      }
+    } else if (act === 't2') {
+      const t2 = el.dataset.t2;
+      if (state.t2 === t2 && !state.t3) {
+        state.openT2 = state.openT2 === t2 ? null : t2;
+      } else {
+        state.mod = el.dataset.mod; state.t2 = t2; state.t3 = null;
+        state.openMod = el.dataset.mod; state.openT2 = t2;
+      }
+    } else if (act === 't3') {
+      const t3 = el.dataset.t3;
+      state.mod = el.dataset.mod; state.t2 = el.dataset.t2;
+      state.openMod = el.dataset.mod; state.openT2 = el.dataset.t2;
+      state.t3 = state.t3 === t3 ? null : t3;
+      state.navOpen = false;
+    }
+    render(); scrollToContent();
+  });
+}
+
+// ---------- 题卡 ----------
+function optsLine(r) {
+  if (!Object.keys(r.opts).length) return '';
+  return Object.entries(r.opts).map(([k,v]) => `${k}.${smartCut(v, 40)}`).join('　');
+}
+
+function qcard(r, idx) {
+  const toks = new Set();
+  for (const m of r.stem.matchAll(/⟦img:([a-f0-9]{10})⟧/g)) toks.add(m[1]);
+  for (const v of Object.values(r.opts)) for (const m of v.matchAll(/⟦img:([a-f0-9]{10})⟧/g)) toks.add(m[1]);
+  const headImgs = r.imgs.filter(k => !toks.has(k));
+  const thumbKey = headImgs[0];
+  const nImgs = headImgs.length;
+  const mat = r.mid ? MATS[r.mid] : null;
+  let pre = '';
+  if (r.stem.length > 200 || r.tmap || /⟦img:/.test(r.stem)) {
+    pre += `<div class="sec"><h4>完整题面</h4><div class="md"><p>${ii(tex(r.stem).replace(/\n/g,'<br>'))}</p></div></div>`;
+  }
+  if (nImgs) {
+    pre += `<div class="sec"><h4>题面原图${nImgs>1?`（${nImgs} 张，点击放大）`:'（点击放大）'}</h4><div class="imgwrap">${headImgs.map(k => `<img src="${imgUrl(k)}" alt="题面图" loading="lazy">`).join('')}</div></div>`;
+  }
+  if (r.tmap) {
+    pre += `<details class="guan"><summary>▸ 题图 OCR（原始识别数据，默认折叠）</summary><div class="md">${md(r.tmap)}</div></details>`;
+  }
+  if (mat && (mat.w || mat.g)) {
+    pre += `<div class="sec"><h4>共享材料（本组题共用）</h4><div class="md">${mat.w ? '<p>' + ii(tex(mat.w).replace(/\n/g,'<br>')) + '</p>' : ''}${ii(md(mat.g))}</div></div>`;
+  }
+  let sol = '';
+  sol += `<div class="sec"><h4>答案</h4><p class="ansbig">${esc(r.ans) || '（无）'}</p></div>`;
+  sol += `<div class="sec"><h4>考点细节</h4><p>${esc(r.detail)}</p></div>`;
+  sol += `<div class="sec"><h4>问法模型</h4><p>${esc(r.wen)}</p></div>`;
+  if (r.chain.length) sol += `<div class="sec"><h4>推理链</h4><ol>${r.chain.map(s=>`<li>${esc(s)}</li>`).join('')}</ol></div>`;
+  if (r.fast) sol += `<div class="sec"><h4>最快解法</h4><p>${esc(r.fast)}</p></div>`;
+  if (r.cuo.length) sol += `<div class="sec"><h4>易错点</h4><ul>${r.cuo.map(s=>`<li>${esc(s)}</li>`).join('')}</ul></div>`;
+  if (r.muti) sol += `<div class="sec"><h4>母题抽象</h4><p>${esc(r.muti)}</p></div>`;
+  if (r.feat.length) sol += `<div class="sec"><h4>题干关键特征</h4><div class="feats">${r.feat.map(s=>`<span>${esc(s)}</span>`).join('')}</div></div>`;
+  if (r.bound) sol += `<div class="sec"><h4>适用边界</h4><p>${esc(r.bound)}</p></div>`;
+  if (r.mix.length) sol += `<div class="sec"><h4>易混考点</h4>${r.mix.map(m=>`<div class="mixrow">· <b>${esc(m.k)}</b>：${esc(m.s)}</div>`).join('')}</div>`;
+  if (r.ask) sol += `<div class="sec"><h4>典型提问</h4><p style="color:var(--sub)">「${esc(r.ask)}」</p></div>`;
+  if (r.guan || r.gimgs.length) {
+    sol += `<details class="guan"><summary>▸ 官方解析${r.guan ? `（${r.guan.length} 字，点击展开）` : ''}${r.gimgs.length ? ` · 附图 ${r.gimgs.length} 张` : ''}</summary>` +
+      (r.guan ? `<div class="md"><p>${ii(tex(r.guan).replace(/\n/g,'<br>'))}</p></div>` : '') +
+      (r.gimgs.length ? `<div class="gimgsec"><div class="gimgcap">解析附图（按文中出现顺序，对应文字空缺处的图形）</div><div class="imgwrap gimgs">${r.gimgs.map(k => `<img src="${imgUrl(k)}" alt="解析附图" loading="lazy">`).join('')}</div></div>` : '') +
+      `</details>`;
+  }
+  if (r.doubt) sol += `<details class="guan doubt"><summary>⚠ 疑点（点击展开）</summary><p style="color:var(--warn);font-size:13px;line-height:1.65">${esc(r.doubt)}</p></details>`;
+
+  const canPractice = state.practice && Object.keys(r.opts).length && r.ans;
+  const picked = state.answers[r.qid];
+  let body;
+  if (canPractice) {
+    const fb = !picked ? ''
+      : picked === '!' ? `<div class="pfb seen">已直接查看 · 计做错 1 次 · 正确答案 ${esc(r.ans)}</div>`
+      : isRight(r, picked) ? '<div class="pfb ok">✓ 回答正确</div>'
+      : `<div class="pfb no">✗ 回答错误 · 正确答案 ${esc(r.ans)}</div>`;
+    body = pre + parea(r, picked) + `<div class="sol"${picked ? '' : ' style="display:none"'}>${fb}${sol}</div>`;
+  } else {
+    body = pre +
+      (Object.keys(r.opts).length ? `<div class="sec"><h4>选项</h4><div class="opts-full">${Object.entries(r.opts).map(([k,v]) => `<div><b>${k}.</b> ${ii(tex(v))}</div>`).join('')}</div></div>` : '') +
+      sol;
+  }
+  let statusTag = '';
+  if (state.practice) {
+    if (!Object.keys(r.opts).length) statusTag = `<span class="tag seen">无选项题</span>`;
+    else if (canPractice && picked) {
+      statusTag = picked === '!' ? `<span class="tag seen">已看答案（计错）</span>`
+        : isRight(r, picked) ? `<span class="tag ok">✓ 答对</span>` : `<span class="tag bad">✗ 答错</span>`;
+    }
+  }
+  const rc = PROG.rec[r.qid];
+  const stTag = rc && rc.n ? `<span class="tag stt ${rc.w > 0 ? 'bad' : 'st'}" title="累计作答 ${rc.n} 次，其中答错 ${rc.w} 次">${rc.w > 0 ? `曾错 ${rc.w} 次` : `已练 ${rc.n} 次`}</span>` : '';
+  const lastTag = state.practice && rc && rc.last && !picked ? `<span class="tag lastst ${rc.last === '!' || !isRight(r, rc.last) ? 'bad' : 'st'}">上次${rc.last === '!' ? '看答案' : isRight(r, rc.last) ? '答对' : '答错'}</span>` : '';
+  const favBtn = `<button class="favg ${FAVS.has(r.qid) ? 'on' : ''}" data-fav="${r.qid}" title="收藏/取消收藏">${FAVS.has(r.qid) ? '★' : '☆'}</button>`;
+  const headNote = canPractice ? (picked ? '' : '<span class="ans-hidden">点击题卡作答</span>')
+    : state.practice ? '' : '<span class="ans-hidden">点击题卡揭晓答案</span>';
+
+  return `<div class="qcard" data-qid="${r.qid}" data-idx="${idx}">
+    <div class="qhead">
+      <div class="meta">
+        <span class="tag">${esc(r.t2)}</span><span class="tag">${esc(r.t3)}</span>
+        <span class="tag" style="background:#eef2f7;color:#475569">${esc(r.yr)}</span>
+        ${r.iq ? `<span class="tag imgq">图片题${nImgs>1?' ·'+nImgs+'图':''}</span>` : ''}
+        ${r.doubt ? `<span class="tag doubt">疑点</span>` : ''}
+        <span class="src">${esc(r.juan)} · qid ${r.qid} · #${idx}</span>
+        ${statusTag}${stTag}${lastTag}${headNote}${favBtn}
+      </div>
+      <div class="stem">${ii(tex(smartCut(r.stem, 200)))}</div>
+      ${(!state.practice && optsLine(r)) ? `<div class="optline">${ii(esc(optsLine(r)))}</div>` : ''}
+      ${thumbKey ? `<img class="thumb" src="${imgUrl(thumbKey)}" alt="题面缩略图" loading="lazy">` : ''}
+    </div>
+    <div class="qbody">${body}</div>
+  </div>`;
+}
+
+// ---------- 练习模式 ----------
+function parea(r, picked) {
+  const isMulti = r.ans.length > 1;
+  const ansSet = new Set(r.ans.split(''));
+  let h = `<div class="sec parea"><h4>${isMulti ? '作答 · 多选题（先点选再提交）' : '作答 · 点击选项'}</h4>`;
+  for (const [k, v] of Object.entries(r.opts)) {
+    let cls = 'popt';
+    if (picked) {
+      cls += ' locked';
+      if (ansSet.has(k)) cls += ' correct';
+      else if (picked !== '!' && picked.includes(k)) cls += ' wrong';
+      else cls += ' dim';
+    }
+    h += `<div class="${cls}" data-qid="${r.qid}" data-k="${k}"><b>${k}.</b> <span>${ii(tex(v))}</span></div>`;
+  }
+  if (!picked) {
+    if (isMulti) h += `<button class="psubmit" data-qid="${r.qid}" disabled>提交答案</button>`;
+    h += `<button class="preveal" data-qid="${r.qid}">不会，直接看答案</button>`;
+  } else {
+    h += `<button class="predo" data-qid="${r.qid}">↺ 重做本题</button>`;
+  }
+  return h + '</div>';
+}
+
+const isRight = (r, picked) =>
+  picked !== '!' && picked.split('').sort().join('') === r.ans.split('').sort().join('');
+const cardEl = qid => document.querySelector(`.qcard[data-qid="${qid}"]`);
+
+function bindCard(card) {
+  const qid = card.dataset.qid;
+  const r = DATA.find(x => x.qid === qid);
+  card.querySelector('.qhead').onclick = e => {
+    if (e.target.tagName === 'IMG') return;
+    card.classList.toggle('open');
+  };
+  card.querySelectorAll('img').forEach(el => el.onclick = e => {
+    e.stopPropagation();
+    $('lightboxImg').src = el.src;
+    $('lightbox').style.display = 'flex';
+  });
+  card.querySelectorAll('.favg').forEach(el => el.onclick = e => {
+    e.stopPropagation();
+    const qid = el.dataset.fav;
+    if (FAVS.has(qid)) FAVS.delete(qid); else FAVS.add(qid);
+    persist(); renderStats();
+    const on = FAVS.has(qid);
+    el.classList.toggle('on', on);
+    el.textContent = on ? '★' : '☆';
+    toast(on ? '已收藏（已自动同步）' : '已取消收藏');
+  });
+  if (!state.practice || !r) return;
+  card.querySelectorAll('.popt').forEach(el => el.onclick = e => {
+    if (e.target.tagName === 'IMG') return;
+    if (state.answers[qid]) return;
+    if (r.ans.length > 1) {
+      el.classList.toggle('sel');
+      const sub = card.querySelector('.psubmit');
+      if (sub) sub.disabled = !card.querySelectorAll('.popt.sel').length;
+    } else {
+      answerQ(qid, el.dataset.k);
+    }
+  });
+  const sub = card.querySelector('.psubmit');
+  if (sub) sub.onclick = () => {
+    const keys = [...card.querySelectorAll('.popt.sel')].map(el => el.dataset.k).sort().join('');
+    if (keys) answerQ(qid, keys);
+  };
+  const rev = card.querySelector('.preveal');
+  if (rev) rev.onclick = () => answerQ(qid, '!');
+  const redo = card.querySelector('.predo');
+  if (redo) redo.onclick = () => redoQ(qid);
+}
+
+function answerQ(qid, picked) {
+  if (state.answers[qid]) return;
+  state.answers[qid] = picked;
+  const r = DATA.find(x => x.qid === qid);
+  const card = cardEl(qid);
+  if (!card || !r) return;
+  const rc = PROG.rec[qid] = PROG.rec[qid] || { n: 0, w: 0 };
+  rc.n++;
+  const wrong = picked === '!' || !isRight(r, picked);
+  if (wrong) rc.w++;
+  rc.last = picked;
+  persist();
+  renderStats();
+  const ansSet = new Set(r.ans.split(''));
+  card.querySelectorAll('.popt').forEach(el => {
+    const k = el.dataset.k;
+    el.classList.remove('sel');
+    el.classList.add('locked');
+    if (ansSet.has(k)) el.classList.add('correct');
+    else if (picked !== '!' && picked.includes(k)) el.classList.add('wrong');
+    else el.classList.add('dim');
+  });
+  const sub = card.querySelector('.psubmit'); if (sub) sub.remove();
+  const rev = card.querySelector('.preveal'); if (rev) rev.remove();
+  const area = card.querySelector('.parea');
+  if (area && !area.querySelector('.predo')) {
+    area.insertAdjacentHTML('beforeend', `<button class="predo" data-qid="${qid}">↺ 重做本题</button>`);
+    area.querySelector('.predo').onclick = () => redoQ(qid);
+  }
+  const meta = card.querySelector('.meta');
+  const note = meta.querySelector('.ans-hidden'); if (note) note.remove();
+  const lastTagEl = meta.querySelector('.lastst'); if (lastTagEl) lastTagEl.remove();
+  meta.insertAdjacentHTML('beforeend', picked === '!' ? `<span class="tag seen">已看答案（计错）</span>`
+    : isRight(r, picked) ? `<span class="tag ok">✓ 答对</span>` : `<span class="tag bad">✗ 答错</span>`);
+  updStatsTag(card, qid);
+  const sol = card.querySelector('.sol');
+  if (sol) {
+    sol.insertAdjacentHTML('afterbegin', picked === '!' ? `<div class="pfb seen">已直接查看 · 计做错 1 次 · 正确答案 ${esc(r.ans)}</div>`
+      : isRight(r, picked) ? '<div class="pfb ok">✓ 回答正确</div>'
+      : `<div class="pfb no">✗ 回答错误 · 正确答案 ${esc(r.ans)}</div>`);
+    sol.style.display = 'block';
+    sol.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  updatePStats();
+}
+
+function redoQ(qid) {
+  delete state.answers[qid];
+  const card = cardEl(qid);
+  const r = DATA.find(x => x.qid === qid);
+  if (!card || !r) return;
+  const wasOpen = card.classList.contains('open');
+  const scrollY = window.scrollY;
+  const fresh = document.createElement('div');
+  fresh.innerHTML = qcard(r, +card.dataset.idx || 0);
+  const nc = fresh.firstElementChild;
+  if (wasOpen) nc.classList.add('open');
+  card.replaceWith(nc);
+  bindCard(nc);
+  window.scrollTo({ top: scrollY });
+  updatePStats();
+}
+
+function practiceStats() {
+  let done = 0, right = 0, wrong = 0;
+  for (const [qid, v] of Object.entries(state.answers)) {
+    const r = DATA.find(x => x.qid === qid);
+    if (!r || !r.ans) continue;
+    done++;
+    if (v === '!') { wrong++; continue; }
+    if (isRight(r, v)) right++; else wrong++;
+  }
+  return { done, right, wrong };
+}
+function updatePStats() {
+  const el = $('pstats');
+  if (el) { const s = practiceStats(); el.textContent = `已答 ${s.done} 题 ✓ ${s.right} ✗ ${s.wrong}`; }
+}
+
+function updStatsTag(card, qid) {
+  const rc = PROG.rec[qid];
+  let el = card.querySelector('.stt');
+  if (!rc || !rc.n) { if (el) el.remove(); return; }
+  if (!el) {
+    el = document.createElement('span');
+    card.querySelector('.meta').insertBefore(el, card.querySelector('.favg'));
+  }
+  el.className = 'tag stt ' + (rc.w > 0 ? 'bad' : 'st');
+  el.title = '累计作答 ' + rc.n + ' 次，其中答错 ' + rc.w + ' 次';
+  el.textContent = rc.w > 0 ? '曾错 ' + rc.w + ' 次' : '已练 ' + rc.n + ' 次';
+}
+
+function seg(kind, label) { return `<span class="cseg" data-crumb="${kind}">${esc(label)}</span>`; }
+
+function renderList() {
+  if (!DATA.length) return;
+  let rows = DATA.filter(pass);
+  if (state.shuffled) {
+    if (!state.order) {
+      state.order = [...DATA.keys()];
+      for (let i = state.order.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [state.order[i], state.order[j]] = [state.order[j], state.order[i]];
+      }
+    }
+    const rank = new Map(state.order.map((oi, pos) => [DATA[oi].qid, pos]));
+    rows = rows.slice().sort((a, b) => rank.get(a.qid) - rank.get(b.qid));
+  }
+  let path = state.mod ? seg('mod', state.mod) : '<b>全部题库</b>';
+  if (state.t2) path += ' › ' + seg('t2', state.t2);
+  if (state.t3) path += ' › ' + seg('t3', state.t3);
+  $('crumb').innerHTML =
+    `${path} · ${rows.length} 题${state.year ? `（${state.year}）` : ''}${state.q ? ` · 搜索「${esc(state.q)}」` : ''}` +
+    `${state.onlyDoubt ? ' · 仅疑点题' : ''}${state.onlyImg ? ' · 仅图片题' : ''}` +
+    `${state.onlyFav ? ' · 仅收藏' : ''}${state.onlyWrong ? ' · 错题重刷' : ''}` +
+    `${state.shuffled ? ' · 已随机排序' : ''}` +
+    `${state.practice ? ' · <span id="pstats"></span>' : ''} · <span style="font-size:11.5px">点路径可回上一级</span>`;
+  $('hint').textContent = rows.length
+    ? (state.onlyWrong
+        ? '错题重刷：这里只显示曾经做错过的题，题卡旁标注「曾错 N 次」，每次打开都可重新作答，做题记录自动同步云端。'
+        : state.practice
+        ? '练习模式：点开题卡点击选项作答，作答后自动显示对错与完整解析，进度自动同步云端。「不会直接看答案」计错 1 次并进错题集。'
+        : '点击题卡展开：题面原图 / 答案 / 推理链 / 最快解法 / 易错点 / 母题抽象 / 适用边界 / 易混考点 / 官方解析。进度自动保存并同步云端。')
+    : (state.onlyWrong ? '错题集还是空的：切到练习模式做几题，做错或看答案的题会自动进来。' : '');
+  const filteredView = state.q || state.onlyDoubt || state.onlyImg || state.onlyFav || state.onlyWrong;
+  const pageSize = state.onlyWrong ? 100 : (filteredView ? 60 : 40);
+  const fkey = [state.year, state.mod, state.t2, state.t3, state.q, state.onlyDoubt, state.onlyImg, state.onlyFav, state.onlyWrong, state.shuffled, state.practice].join('|');
+  if (state._fkey !== fkey) { state._fkey = fkey; state.limit = pageSize; }
+  const top = rows.slice(0, state.limit);
+  $('list').innerHTML = top.length
+    ? top.map((r, i) => qcard(r, i + 1)).join('') +
+      (rows.length > top.length ? `<div class="empty"><button class="tbtn" id="moreBtn">加载更多（已显示 ${top.length} / 共 ${rows.length} 题）</button></div>` : '')
+    : `<div class="empty">没有符合条件的题</div>`;
+  $('list').querySelectorAll('.qcard').forEach(bindCard);
+  const moreBtn = $('moreBtn');
+  if (moreBtn) moreBtn.onclick = () => { state.limit += pageSize; renderList(); };
+  updatePStats();
+  $('crumb').querySelectorAll('.cseg').forEach(el => el.onclick = () => {
+    const k = el.dataset.crumb;
+    if (k === 'mod') { state.t2 = null; state.t3 = null; }
+    if (k === 't2') { state.t3 = null; }
+    if (k === 't3') { state.t3 = null; }
+    render(); scrollToContent();
+  });
+}
+
+function scrollToContent() {
+  const y = $('crumb').getBoundingClientRect().top + window.scrollY - 150;
+  window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+}
+
+function render() { renderStats(); renderNav(); renderList(); }
+
+$('navToggle').onclick = () => { state.navOpen = !state.navOpen; renderNav(); };
+$('q').addEventListener('input', e => { state.q = e.target.value.trim(); state.t3 = null; renderList(); });
+
+function renderYearBtns() {
+  $('yearBtns').innerHTML =
+    `<button class="tbtn ${!state.year?'on':''}" data-year="">全部年份</button>` +
+    ALLYEARS.map(y => `<button class="tbtn ${state.year===y?'on':''}" data-year="${y}">${y}</button>`).join('');
+  $('yearBtns').querySelectorAll('button').forEach(b => b.onclick = () => {
+    state.year = b.dataset.year || null;
+    renderYearBtns(); render();
+  });
+}
+
+function syncToggles() {
+  $('modeBtn').classList.toggle('on', state.practice);
+  $('modeBtn').textContent = state.practice ? '📖 背题模式' : '✏️ 练习模式';
+  $('onlyDoubt').classList.toggle('on', state.onlyDoubt);
+  $('onlyDoubt').textContent = state.onlyDoubt ? '✓ 只看疑点题' : '只看疑点题';
+  $('onlyImg').classList.toggle('on', state.onlyImg);
+  $('onlyImg').textContent = state.onlyImg ? '✓ 只看图片题' : '只看图片题';
+  $('onlyFav').classList.toggle('on', state.onlyFav);
+  $('onlyFav').textContent = state.onlyFav ? '✓ 只看收藏' : '★ 只看收藏';
+  $('onlyWrong').classList.toggle('on', state.onlyWrong);
+  $('onlyWrong').textContent = state.onlyWrong ? '✓ 错题重刷中' : '📕 错题重刷';
+  $('shuffle').classList.toggle('on', state.shuffled);
+  $('shuffle').textContent = state.shuffled ? '🎲 已打乱' : '🎲 随机打乱';
+}
+$('onlyDoubt').onclick = () => { state.onlyDoubt = !state.onlyDoubt; syncToggles(); renderList(); };
+$('onlyImg').onclick = () => { state.onlyImg = !state.onlyImg; syncToggles(); renderList(); };
+$('onlyFav').onclick = () => { state.onlyFav = !state.onlyFav; syncToggles(); renderList(); };
+$('onlyWrong').onclick = () => { state.onlyWrong = !state.onlyWrong; syncToggles(); renderList(); };
+$('shuffle').onclick = () => { state.shuffled = !state.shuffled; state.order = null; syncToggles(); renderList(); };
+$('modeBtn').onclick = () => { state.practice = !state.practice; syncToggles(); renderList(); };
+
+// ---------- 云同步按钮 ----------
+$('syncBtn').onclick = async () => {
+  if (!syncConfig || !syncConfig.token) {
+    const pin = prompt('输入 4 位同步口令激活多端云同步（默认 1905）：', '1905');
+    if (!pin) return;
+    const ok = await unlockWithPin(pin);
+    if (!ok) { toast('同步口令不正确'); return; }
+  }
+  await cloudPush(true);
+};
+
+// ---------- 一键缓存全库题图供纯离线使用 ----------
+$('cacheImgBtn').onclick = async () => {
+  if (!('caches' in window)) { toast('当前浏览器不支持离线缓存 API'); return; }
+  const keys = Object.keys(IMGKIND);
+  if (!keys.length) return;
+  const btn = $('cacheImgBtn');
+  btn.disabled = true;
+  try {
+    const cache = await caches.open('xingce-pwa-img-v4.1');
+    let done = 0;
+    const batch = 24;
+    for (let i = 0; i < keys.length; i += batch) {
+      const slice = keys.slice(i, i + batch);
+      await Promise.all(slice.map(async k => {
+        const u = imgUrl(k);
+        const m = await cache.match(u);
+        if (!m) {
+          const r = await fetch(u);
+          if (r && r.ok) await cache.put(u, r);
+        }
+        done++;
+      }));
+      btn.textContent = `📦 缓存中 ${Math.round(done / keys.length * 100)}%`;
+    }
+    btn.textContent = '✓ 题图已离线';
+    toast(`已缓存全部 ${keys.length} 张图片，飞行模式下也可完整刷图推与资料题`);
+  } catch (e) {
+    btn.textContent = '📦 缓存题图';
+    toast('缓存中断：' + e.message);
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+// ---------- 导出进度 JSON（几 KB，秒存） ----------
+$('saveBtn').onclick = () => {
+  persist();
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const fname = `行测进度-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}.json`;
+  const blob = new Blob([JSON.stringify(PROG, null, 2)], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = fname;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
+  toast('已导出轻量进度 JSON（同时已自动保存在本地与云端）');
+};
+
+// ---------- 导入旧版 HTML 或 JSON 进度 ----------
+function parseProgressText(text) {
+  const raw = String(text || '');
+  let data = null;
+  try { data = JSON.parse(raw); } catch (e) {}
+  if (!data || typeof data !== 'object') {
+    const m = raw.match(/<script id="progressStore"[^>]*>([\s\S]*?)<\/script>/);
+    if (m) { try { data = JSON.parse(m[1]); } catch (e) {} }
+  }
+  if (!data || typeof data !== 'object') return null;
+  if (!data.rec && !data.favs) return null;
+  return data;
+}
+function importProgressText(text, label) {
+  const data = parseProgressText(text);
+  if (!data) { toast('导入失败：没有找到 progressStore 或合法进度 JSON'); return false; }
+  let added = 0, merged = 0;
+  for (const [qid, rc] of Object.entries(data.rec || {})) {
+    if (!rc || typeof rc !== 'object') continue;
+    const n = Math.max(0, Number(rc.n) || 0);
+    const w = Math.max(0, Number(rc.w) || 0);
+    if (!n && !w) continue;
+    const cur = PROG.rec[qid];
+    if (!cur) {
+      PROG.rec[qid] = { n, w };
+      if (rc.last !== undefined) PROG.rec[qid].last = rc.last;
+      added++;
+    } else {
+      cur.n = Math.max(Number(cur.n) || 0, n);
+      cur.w = Math.max(Number(cur.w) || 0, w);
+      if (rc.last !== undefined && !cur.last) cur.last = rc.last;
+      merged++;
+    }
+  }
+  for (const qid of (Array.isArray(data.favs) ? data.favs : [])) {
+    if (!FAVS.has(qid)) { FAVS.add(qid); added++; }
+  }
+  persist(true);
+  renderStats();
+  renderList();
+  toast('导入完成：新增 ' + added + ' 条，合并 ' + merged + ' 条' + (label ? '（' + label + '）' : '') + '，已自动同步云端');
+  return true;
+}
+window.importProgressText = importProgressText;
+$('importBtn').onclick = () => $('importFile').click();
+$('importFile').onchange = async e => {
+  const f = e.target.files && e.target.files[0];
+  if (!f) return;
+  try {
+    const text = await f.text();
+    importProgressText(text, f.name);
+  } catch (err) {
+    toast('导入失败：' + (err && err.message ? err.message : err));
+  }
+  e.target.value = '';
+};
+
+$('lightbox').onclick = () => { $('lightbox').style.display = 'none'; };
+document.addEventListener('keydown', e => { if (e.key === 'Escape') $('lightbox').style.display = 'none'; });
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && syncConfig && syncConfig.gistId) cloudPull(true);
+});
+
+// ---------- 启动加载 ----------
+syncToggles();
+initStorageAndSync();
+fetch('data.json')
+  .then(r => r.json())
+  .then(p => {
+    DATA = p.items || [];
+    MATS = p.mats || {};
+    IMGKIND = p.imgkind || {};
+    ALLYEARS = p.years || [];
+    MODULES = p.modules || [];
+    renderYearBtns();
+    render();
+  })
+  .catch(err => {
+    $('list').innerHTML = `<div class="empty">题库加载失败：${esc(err.message)}，请刷新重试</div>`;
+  });
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
