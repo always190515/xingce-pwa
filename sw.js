@@ -1,9 +1,9 @@
-const CACHE_CORE = 'xingce-pwa-core-v4.2';
+const CACHE_CORE = 'xingce-pwa-core-v4.3-e356288d';
 const CACHE_IMG = 'xingce-pwa-img-v4.2';
 const CORE_ASSETS = [
   './',
   './index.html',
-  './data.json',
+  './data.json?v=e356288d',
   './manifest.webmanifest',
   './icon-192.png',
   './icon-512.png',
@@ -11,8 +11,9 @@ const CORE_ASSETS = [
 ];
 
 self.addEventListener('install', event => {
+  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_CORE).then(cache => cache.addAll(CORE_ASSETS)).then(() => self.skipWaiting())
+    caches.open(CACHE_CORE).then(cache => cache.addAll(CORE_ASSETS))
   );
 });
 
@@ -44,10 +45,10 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // 核心页面与题库采用 Stale-While-Revalidate，离线秒开且后台静默更新
+  // 核心页面与题库采用带版本校验的缓存策略
   event.respondWith(
     caches.open(CACHE_CORE).then(async cache => {
-      const cached = await cache.match(req, { ignoreSearch: true });
+      const cached = await cache.match(req);
       const netPromise = fetch(req).then(resp => {
         if (resp && resp.ok) cache.put(req, resp.clone());
         return resp;

@@ -1096,7 +1096,7 @@ document.addEventListener('visibilitychange', () => {
 // ---------- 启动加载 ----------
 syncToggles();
 initStorageAndSync();
-fetch('data.json')
+fetch('data.json?v=e356288d')
   .then(r => r.json())
   .then(p => {
     DATA = p.items || [];
@@ -1112,8 +1112,14 @@ fetch('data.json')
   });
 
 if ('serviceWorker' in navigator) {
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshing) { refreshing = true; location.reload(); }
+  });
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      try { reg.update(); } catch (e) {}
+    }).catch(() => {});
   });
 }
 </script>
