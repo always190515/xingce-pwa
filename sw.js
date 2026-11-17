@@ -1,9 +1,9 @@
-const CACHE_CORE = 'xingce-pwa-core-v5.1-e356288d-235576bc';
+const CACHE_CORE = 'xingce-pwa-core-v5.2-de83b8be-f6980c23';
 const CACHE_IMG = 'xingce-pwa-img-v4.2';
 const CORE_ASSETS = [
   './',
   './index.html',
-  './data.json?v=e356288d',
+  './data.json?v=de83b8be',
   './manifest.webmanifest',
   './icon-192.png',
   './icon-512.png',

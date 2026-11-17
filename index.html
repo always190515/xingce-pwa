@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
-<title>行测考点浏览器 v5.0 PWA（2024–2026）</title>
+<title>行测考点浏览器 v5.2 PWA（2022–2026）</title>
 <script>
 (function () {
   try {
@@ -26,7 +26,7 @@
 </script>
 <style>
 /* ==========================================================================
-   行测考点浏览器 v5.0 PWA — Arc / Modern SaaS 灵动岛屿样式系统 (styles.css)
+   行测考点浏览器 v5.2 PWA — Arc / Modern SaaS 灵动岛屿样式系统 (styles.css)
    Dual Views: Minimalist Stream Workspace & Single-Question Focus Cockpit
    ========================================================================== */
 
@@ -1239,10 +1239,11 @@ div#stats.stats-grid {
 
 .stat-sub {
   font-size: 11px;
+  line-height: 1.45;
   color: var(--muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  margin-bottom: 2px;
 }
 
 .stat-bar {
@@ -1250,7 +1251,7 @@ div#stats.stats-grid {
   border-radius: 999px;
   background: var(--line);
   overflow: hidden;
-  margin-top: 4px;
+  margin-top: auto;
 }
 
 .stat-bar > i {
@@ -3237,7 +3238,7 @@ html[data-theme="dark"] #toast {
             <circle cx="19" cy="14" r="1.5" fill="#ffffff"/>
           </svg>
           <span class="nav-title">行测考点</span>
-          <span class="ver-badge">v5.0</span>
+          <span class="ver-badge">v5.2</span>
         </div>
         <button id="navClose" class="icon-btn" type="button" aria-label="关闭目录">
           <svg class="ico ico-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -3279,8 +3280,8 @@ html[data-theme="dark"] #toast {
               <path d="M9 9.5h10M9 14h6.5M9 18.5h10" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
               <circle cx="19" cy="14" r="1.5" fill="#ffffff"/>
             </svg>
-            <h1>行测考点浏览器 <span class="ver-badge">v5.0</span></h1>
-            <span class="brand-sub">5396 题 · 1223 图</span>
+            <h1>行测考点浏览器 <span class="ver-badge">v5.2</span></h1>
+            <span class="brand-sub">9516 题 · 2173 图</span>
           </div>
           <div class="view-seg" role="group" aria-label="视图切换">
             <button id="viewStreamBtn" class="seg-btn on" type="button" aria-pressed="true" title="极简流式工作台">
@@ -3506,7 +3507,7 @@ html[data-theme="dark"] #toast {
 <script id="progressStore" type="application/json">{}</script>
 <script id="syncBundle" type="application/json">{"salt":"ziM84MfPh7ijxVBLSWTS5Q==","verify":"5274cd59437939cf61cf46df43e9ce20810a480a459581848d788ced555016c4","ct":"uDsHPNrcPOvmfexAkPCjmQrixCH2GRavHK0oV67Lt30VlUMd1WfQQq+gRTlZ+VF74700Q4TphxM/QzY6Nvheo0TkvIgjHIzvMPOJo1ZOfcnoTqRC4gomkVDjgaek8rI4","gistId":"b93fb51bca84779f5298bc2f3700e8f1"}</script>
 <script>
-/* 行测考点浏览器 v5.0 PWA — Arc 岛屿工作台 & 双视图交互引擎 */
+/* 行测考点浏览器 v5.2 PWA — Arc 岛屿工作台 & 双视图交互引擎 */
 'use strict';
 
 let DATA = [];
@@ -6058,7 +6059,7 @@ syncToggles();
 syncHeaderHeight();
 initStorageAndSync();
 
-fetch('data.json?v=e356288d')
+fetch('data.json?v=de83b8be')
   .then(r => r.json())
   .then(p => {
     DATA = p.items || [];
