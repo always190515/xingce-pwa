@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
-<title>行测考点浏览器 v5.2 PWA（2022–2026）</title>
+<title>行测考点浏览器 v5.3 PWA（2022–2026）</title>
 <script>
 (function () {
   try {
@@ -26,7 +26,7 @@
 </script>
 <style>
 /* ==========================================================================
-   行测考点浏览器 v5.2 PWA — Arc / Modern SaaS 灵动岛屿样式系统 (styles.css)
+   行测考点浏览器 v5.3 PWA — Arc / Modern SaaS 灵动岛屿样式系统 (styles.css)
    Dual Views: Minimalist Stream Workspace & Single-Question Focus Cockpit
    ========================================================================== */
 
@@ -116,30 +116,48 @@ html[data-theme="dark"] {
 html {
   overflow-x: clip;
   scroll-behavior: smooth;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--muted) 42%, transparent) transparent;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
   overflow-x: clip;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "PingFang SC", "Hiragino Sans GB", "HarmonyOS Sans SC", "MiSans", "Segoe UI Variable", "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans SC", sans-serif;
   font-size: 14px;
   line-height: 1.62;
   color: var(--ink);
   background-color: var(--bg);
-  background-image:
-    radial-gradient(900px 420px at 15% -5%, rgba(99, 102, 241, 0.09), transparent 60%),
-    radial-gradient(760px 380px at 88% -8%, rgba(56, 189, 248, 0.07), transparent 58%);
-  background-attachment: fixed;
-  padding-bottom: env(safe-area-inset-bottom);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(900px 420px at 15% -5%, rgba(99, 102, 241, 0.09), transparent 60%),
+    radial-gradient(760px 380px at 88% -8%, rgba(56, 189, 248, 0.07), transparent 58%);
+}
+
 html[data-theme="dark"] body {
   background-color: var(--bg);
+}
+
+html[data-theme="dark"] body::before {
   background-image:
     radial-gradient(960px 460px at 14% -8%, rgba(129, 140, 248, 0.11), transparent 60%),
     radial-gradient(780px 400px at 88% -6%, rgba(56, 189, 248, 0.08), transparent 58%);
+}
+
+body.modal-open {
+  overflow: hidden;
 }
 
 button,
@@ -148,6 +166,39 @@ select,
 textarea {
   font-family: inherit;
   color: inherit;
+}
+
+button,
+.nd,
+.popt,
+.cseg,
+.stat-card.clickable,
+summary {
+  touch-action: manipulation;
+}
+
+.icon-btn:active:not(:disabled),
+.seg-btn:active:not(:disabled),
+.ypill:active:not(:disabled),
+.fchip:active:not(:disabled),
+.action-pill:active:not(:disabled),
+.deck-btn:active:not(:disabled),
+.tbtn:active:not(:disabled),
+.psubmit:active:not(:disabled),
+.preveal:active:not(:disabled),
+.predo:active:not(:disabled),
+button.favg:active:not(:disabled),
+button.focus-jump-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.nd:active {
+  background: var(--accent-soft);
+}
+
+.popt:not(.locked):active {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 :focus-visible {
@@ -179,7 +230,38 @@ textarea {
   display: inline-block;
 }
 
-/* 细腻滚动条 */
+/* 细腻滚动条（全局桌面与局部滚动容器） */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--muted) 38%, transparent);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  ::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--muted) 62%, transparent);
+    background-clip: content-box;
+  }
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.nav-tree,
+.mat-content,
+.focus-mat-pane,
+.md table {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--muted) 38%, transparent) transparent;
+}
+
 .nav-tree::-webkit-scrollbar,
 .mat-content::-webkit-scrollbar,
 .focus-mat-pane::-webkit-scrollbar,
@@ -194,6 +276,7 @@ textarea {
 .md table::-webkit-scrollbar-thumb {
   background: var(--line);
   border-radius: 999px;
+  border: none;
 }
 
 .nav-tree::-webkit-scrollbar-track,
@@ -207,9 +290,14 @@ textarea {
 .app-shell {
   display: flex;
   align-items: flex-start;
+  min-height: 100vh;
   min-height: 100dvh;
   gap: 16px;
-  padding: 12px 16px 32px 12px;
+  padding:
+    max(12px, env(safe-area-inset-top))
+    max(16px, calc(12px + env(safe-area-inset-right)))
+    max(32px, calc(20px + env(safe-area-inset-bottom)))
+    max(12px, calc(12px + env(safe-area-inset-left)));
   max-width: 1560px;
   margin: 0 auto;
 }
@@ -340,12 +428,14 @@ input#navSearch:focus {
   transition: background .13s ease, color .13s ease;
 }
 
-.nd:hover {
-  background: rgba(15, 23, 42, 0.045);
-}
+@media (hover: hover) and (pointer: fine) {
+  .nd:hover {
+    background: rgba(15, 23, 42, 0.045);
+  }
 
-html[data-theme="dark"] .nd:hover {
-  background: rgba(255, 255, 255, 0.05);
+  html[data-theme="dark"] .nd:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
 }
 
 .nd.on {
@@ -510,10 +600,12 @@ button#navStatsBtn.nav-stats-btn {
   transition: all .15s ease;
 }
 
-button#navStatsBtn.nav-stats-btn:hover {
-  background: var(--accent-soft);
-  color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 25%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  button#navStatsBtn.nav-stats-btn:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 25%, transparent);
+  }
 }
 
 .nav-backdrop {
@@ -537,15 +629,19 @@ button#navStatsBtn.nav-stats-btn:hover {
 @media (max-width: 900px) {
   .app-shell {
     display: block;
-    padding: 8px 10px 28px;
+    padding:
+      max(8px, env(safe-area-inset-top))
+      max(10px, env(safe-area-inset-right))
+      calc(28px + env(safe-area-inset-bottom))
+      max(10px, env(safe-area-inset-left));
   }
 
   nav#nav.sidebar {
     position: fixed;
     top: calc(10px + env(safe-area-inset-top));
-    left: 10px;
+    left: max(10px, env(safe-area-inset-left));
     bottom: calc(10px + env(safe-area-inset-bottom));
-    width: min(84vw, 310px);
+    width: min(84vw, 316px);
     height: auto;
     border-radius: 20px;
     z-index: 60;
@@ -555,7 +651,7 @@ button#navStatsBtn.nav-stats-btn:hover {
   }
 
   nav#nav.sidebar.closed {
-    transform: translateX(calc(-100% - 20px));
+    transform: translateX(calc(-100% - 20px - env(safe-area-inset-left)));
     pointer-events: none;
     box-shadow: none;
   }
@@ -581,7 +677,8 @@ button#navStatsBtn.nav-stats-btn:hover {
 
 /* ---------- 4. 右侧工作区与悬浮毛玻璃指令岛 ---------- */
 main.main-col {
-  flex: 1;
+  flex: 1 1 0%;
+  width: 100%;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -632,9 +729,11 @@ header#appHeader.app-header {
   transition: background .15s ease, color .15s ease, border-color .15s ease;
 }
 
-.icon-btn:hover {
-  background: var(--card-2);
-  color: var(--ink);
+@media (hover: hover) and (pointer: fine) {
+  .icon-btn:hover {
+    background: var(--card-2);
+    color: var(--ink);
+  }
 }
 
 .icon-btn.on {
@@ -703,8 +802,10 @@ body.nav-closed .mobile-brand {
   transition: background .15s ease, color .15s ease, box-shadow .15s ease;
 }
 
-.seg-btn:hover {
-  color: var(--ink);
+@media (hover: hover) and (pointer: fine) {
+  .seg-btn:hover {
+    color: var(--ink);
+  }
 }
 
 .seg-btn.on {
@@ -809,9 +910,11 @@ button#qClear.q-clear {
   transition: background .12s ease, color .12s ease;
 }
 
-button#qClear.q-clear:hover {
-  background: var(--accent);
-  color: var(--accent-ink);
+@media (hover: hover) and (pointer: fine) {
+  button#qClear.q-clear:hover {
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
 }
 
 /* 右侧同步与工具按钮 */
@@ -841,10 +944,12 @@ button#qClear.q-clear:hover {
   transition: all .15s ease;
 }
 
-.action-pill:hover {
-  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
-  color: var(--accent);
-  background: var(--accent-soft);
+@media (hover: hover) and (pointer: fine) {
+  .action-pill:hover {
+    border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
 }
 
 .sync-dot {
@@ -936,9 +1041,11 @@ button#qClear.q-clear:hover {
   transition: background .12s ease, color .12s ease;
 }
 
-.menu-item:hover {
-  background: var(--accent-soft);
-  color: var(--accent);
+@media (hover: hover) and (pointer: fine) {
+  .menu-item:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
 }
 
 .menu-item:disabled {
@@ -998,8 +1105,10 @@ button.ypill {
   transition: background .15s ease, color .15s ease, box-shadow .15s ease;
 }
 
-button.ypill:hover {
-  color: var(--ink);
+@media (hover: hover) and (pointer: fine) {
+  button.ypill:hover {
+    color: var(--ink);
+  }
 }
 
 button.ypill.on {
@@ -1039,9 +1148,11 @@ button.fchip {
   transition: background .14s ease, color .14s ease;
 }
 
-button.fchip:hover {
-  background: var(--card-2);
-  color: var(--ink);
+@media (hover: hover) and (pointer: fine) {
+  button.fchip:hover {
+    background: var(--card-2);
+    color: var(--ink);
+  }
 }
 
 button.fchip.on {
@@ -1064,9 +1175,11 @@ button.fchip.reset-chip {
   color: var(--muted);
 }
 
-button.fchip.reset-chip:hover {
-  background: var(--bad-bg);
-  color: var(--bad);
+@media (hover: hover) and (pointer: fine) {
+  button.fchip.reset-chip:hover {
+    background: var(--bad-bg);
+    color: var(--bad);
+  }
 }
 
 .chip-cnt {
@@ -1119,12 +1232,15 @@ div#crumbBar.crumb-bar {
   transition: background .12s ease, color .12s ease;
 }
 
-.crumb .cseg:hover {
-  color: var(--accent);
-  background: var(--accent-soft);
+@media (hover: hover) and (pointer: fine) {
+  .crumb .cseg:hover,
+  .mobile-crumb .cseg:hover {
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
 }
 
-#pstats.pstats-pill {
+.pstats-pill {
   font-size: 11.5px;
   font-weight: 600;
   color: var(--accent);
@@ -1136,7 +1252,7 @@ div#crumbBar.crumb-bar {
   font-variant-numeric: tabular-nums;
 }
 
-#pstats.pstats-pill:empty {
+.pstats-pill:empty {
   display: none;
 }
 
@@ -1189,9 +1305,11 @@ section#statsPanel.stats-panel.collapsed {
   transition: all .15s ease;
 }
 
-#statsCollapseBtn:hover {
-  color: var(--accent);
-  background: var(--accent-soft);
+@media (hover: hover) and (pointer: fine) {
+  #statsCollapseBtn:hover {
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
 }
 
 div#stats.stats-grid {
@@ -1217,10 +1335,12 @@ div#stats.stats-grid {
   cursor: pointer;
 }
 
-.stat-card.clickable:hover {
-  background: var(--accent-soft);
-  border-color: color-mix(in srgb, var(--accent) 25%, transparent);
-  transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+  .stat-card.clickable:hover {
+    background: var(--accent-soft);
+    border-color: color-mix(in srgb, var(--accent) 25%, transparent);
+    transform: translateY(-1px);
+  }
 }
 
 .stat-val {
@@ -1279,6 +1399,13 @@ div#hint.hint:empty {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  width: 100%;
+  container-type: inline-size;
+  container-name: focuswrap;
+}
+
+.mobile-context-bar {
+  display: none;
 }
 
 article.qcard {
@@ -1288,11 +1415,14 @@ article.qcard {
   border-radius: 18px;
   box-shadow: var(--shadow-card);
   overflow: hidden;
+  overflow: clip;
   transition: box-shadow .18s ease, border-color .18s ease;
 }
 
-article.qcard:hover {
-  box-shadow: var(--shadow-island);
+@media (hover: hover) and (pointer: fine) {
+  article.qcard:hover {
+    box-shadow: var(--shadow-island);
+  }
 }
 
 article.qcard.open {
@@ -1316,8 +1446,10 @@ article.qcard.kb-focus {
   transition: background .14s ease;
 }
 
-.qhead:hover {
-  background: color-mix(in srgb, var(--card-2) 55%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  .qhead:hover {
+    background: color-mix(in srgb, var(--card-2) 55%, transparent);
+  }
 }
 
 .qhead .meta {
@@ -1374,9 +1506,11 @@ article.qcard.kb-focus {
   transition: background .14s ease, color .14s ease;
 }
 
-.tag.t3-tag:hover {
-  background: var(--accent);
-  color: var(--accent-ink);
+@media (hover: hover) and (pointer: fine) {
+  .tag.t3-tag:hover {
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
 }
 
 .tag.imgq {
@@ -1446,15 +1580,17 @@ button.favg {
   transition: background .14s ease, color .14s ease, transform .14s ease;
 }
 
-button.focus-jump-btn:hover {
-  background: var(--accent-soft);
-  color: var(--accent);
-}
+@media (hover: hover) and (pointer: fine) {
+  button.focus-jump-btn:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
 
-button.favg:hover {
-  background: var(--warn-bg);
-  color: #f59e0b;
-  transform: scale(1.06);
+  button.favg:hover {
+    background: var(--warn-bg);
+    color: #f59e0b;
+    transform: scale(1.06);
+  }
 }
 
 button.favg.on {
@@ -1473,9 +1609,11 @@ button.favg.on {
   transition: transform .2s ease, color .15s ease, background .15s ease;
 }
 
-.qhead:hover .qchev {
-  color: var(--accent);
-  background: var(--card-2);
+@media (hover: hover) and (pointer: fine) {
+  .qhead:hover .qchev {
+    color: var(--accent);
+    background: var(--card-2);
+  }
 }
 
 article.qcard.open .qchev {
@@ -1608,8 +1746,10 @@ article.qcard.open .qchev {
   transition: box-shadow .15s ease;
 }
 
-.imgwrap img:hover {
-  box-shadow: var(--shadow-sm);
+@media (hover: hover) and (pointer: fine) {
+  .imgwrap img:hover {
+    box-shadow: var(--shadow-sm);
+  }
 }
 
 .mat-box {
@@ -1652,9 +1792,11 @@ article.qcard.open .qchev {
   transition: background .14s ease, border-color .14s ease;
 }
 
-.mat-toggle:hover {
-  background: var(--accent-soft);
-  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  .mat-toggle:hover {
+    background: var(--accent-soft);
+    border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  }
 }
 
 .mat-content.md {
@@ -1717,9 +1859,11 @@ article.qcard.open .qchev {
   cursor: pointer;
 }
 
-.popt:not(.locked):hover {
-  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
-  background: var(--accent-soft);
+@media (hover: hover) and (pointer: fine) {
+  .popt:not(.locked):hover {
+    border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+    background: var(--accent-soft);
+  }
 }
 
 .popt.sel {
@@ -1733,21 +1877,34 @@ article.qcard.open .qchev {
 }
 
 .popt.correct,
-.popt.correct:hover,
 .sopt.is-ans {
   border-color: color-mix(in srgb, var(--ok) 35%, transparent);
   background: var(--ok-bg);
 }
 
-.popt.wrong,
-.popt.wrong:hover {
+.popt.wrong {
   border-color: color-mix(in srgb, var(--bad) 35%, transparent);
   background: var(--bad-bg);
 }
 
-.popt.dim,
-.popt.dim:hover {
+.popt.dim {
   opacity: .54;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .popt.correct:hover {
+    border-color: color-mix(in srgb, var(--ok) 35%, transparent);
+    background: var(--ok-bg);
+  }
+
+  .popt.wrong:hover {
+    border-color: color-mix(in srgb, var(--bad) 35%, transparent);
+    background: var(--bad-bg);
+  }
+
+  .popt.dim:hover {
+    opacity: .54;
+  }
 }
 
 .opt-key {
@@ -1845,8 +2002,10 @@ html[data-theme="dark"] .popt.wrong .opt-key {
   transition: background .15s ease, opacity .15s ease;
 }
 
-.psubmit:hover:not(:disabled) {
-  background: var(--accent-hover);
+@media (hover: hover) and (pointer: fine) {
+  .psubmit:hover:not(:disabled) {
+    background: var(--accent-hover);
+  }
 }
 
 .psubmit:disabled {
@@ -1867,10 +2026,12 @@ html[data-theme="dark"] .popt.wrong .opt-key {
   transition: all .15s ease;
 }
 
-.preveal:hover {
-  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
-  color: var(--accent);
-  background: var(--accent-soft);
+@media (hover: hover) and (pointer: fine) {
+  .preveal:hover {
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
 }
 
 .predo {
@@ -1889,10 +2050,12 @@ html[data-theme="dark"] .popt.wrong .opt-key {
   transition: all .15s ease;
 }
 
-.predo:hover {
-  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
-  color: var(--accent);
-  background: var(--accent-soft);
+@media (hover: hover) and (pointer: fine) {
+  .predo:hover {
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
 }
 
 /* 三层认知结构解析 (.sol — 无生硬实线框的柔和处理) */
@@ -2236,12 +2399,16 @@ details.guan.doubt p {
 /* ---------- 7. 全新「单题专注舱」(.focus-stage) ---------- */
 .focus-stage {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 14px;
   animation: cardFloatIn .22s cubic-bezier(.22, 1, .36, 1);
+}
+
+.focus-mobile-dock {
+  display: none;
 }
 
 .focus-stage:has(.focus-single) {
@@ -2317,10 +2484,12 @@ details.guan.doubt p {
   transition: all .15s ease;
 }
 
-.deck-btn:hover:not(:disabled) {
-  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
-  color: var(--accent);
-  background: var(--accent-soft);
+@media (hover: hover) and (pointer: fine) {
+  .deck-btn:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
 }
 
 .deck-btn:disabled {
@@ -2328,7 +2497,8 @@ details.guan.doubt p {
   cursor: not-allowed;
 }
 
-#focusMaskBtn.deck-btn.on {
+#focusMaskBtn.deck-btn.on,
+#focusDockMask.deck-btn.on {
   background: var(--accent-soft);
   border-color: color-mix(in srgb, var(--accent) 40%, transparent);
   color: var(--accent);
@@ -2354,8 +2524,10 @@ details.guan.doubt p {
   cursor: default;
 }
 
-.qcard.focus-card .qhead:hover {
-  background: transparent;
+@media (hover: hover) and (pointer: fine) {
+  .qcard.focus-card .qhead:hover {
+    background: transparent;
+  }
 }
 
 .qcard.focus-card .qchev {
@@ -2389,18 +2561,18 @@ details.guan.doubt p {
   min-width: 0;
 }
 
-@media (min-width: 1120px) {
+@container focuswrap (min-width: 800px) {
   .focus-split {
     display: grid;
-    grid-template-columns: minmax(360px, 0.92fr) minmax(420px, 1.08fr);
-    gap: 22px;
+    grid-template-columns: minmax(330px, 0.94fr) minmax(370px, 1.06fr);
+    gap: 18px;
     align-items: start;
   }
 
   .focus-mat-pane {
     position: sticky;
     top: calc(var(--header-h) + 20px);
-    max-height: calc(100dvh - var(--header-h) - 40px);
+    max-height: calc(100dvh - var(--header-h) - 36px);
     overflow-y: auto;
   }
 
@@ -2408,6 +2580,37 @@ details.guan.doubt p {
     max-height: none;
     overflow-y: visible;
     border-bottom: none;
+  }
+}
+
+@container focuswrap (min-width: 1020px) {
+  .focus-split {
+    grid-template-columns: minmax(360px, 0.92fr) minmax(420px, 1.08fr);
+    gap: 22px;
+  }
+}
+
+@supports not (container-type: inline-size) {
+  @media (min-width: 1120px) {
+    .focus-split {
+      display: grid;
+      grid-template-columns: minmax(360px, 0.92fr) minmax(420px, 1.08fr);
+      gap: 22px;
+      align-items: start;
+    }
+
+    .focus-mat-pane {
+      position: sticky;
+      top: calc(var(--header-h) + 20px);
+      max-height: calc(100dvh - var(--header-h) - 40px);
+      overflow-y: auto;
+    }
+
+    .focus-mat-pane .mat-box .mat-content {
+      max-height: none;
+      overflow-y: visible;
+      border-bottom: none;
+    }
   }
 }
 
@@ -2451,11 +2654,13 @@ details.guan.doubt p {
   transition: all .18s ease;
 }
 
-.focus-reveal-cover:hover {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent-soft) 150%, var(--card));
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
+@media (hover: hover) and (pointer: fine) {
+  .focus-reveal-cover:hover {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent-soft) 150%, var(--card));
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
 }
 
 /* ---------- 8. 数学排版、Markdown 表格与深色图片衬底铁律 ---------- */
@@ -2644,10 +2849,12 @@ html[data-theme="dark"] .imgwrap img {
   transition: all .15s ease;
 }
 
-.tbtn:hover {
-  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
-  color: var(--accent);
-  background: var(--accent-soft);
+@media (hover: hover) and (pointer: fine) {
+  .tbtn:hover {
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
 }
 
 /* 灯箱 */
@@ -2671,7 +2878,7 @@ html[data-theme="dark"] .imgwrap img {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
+  padding: calc(10px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 10px max(16px, env(safe-area-inset-left));
   background: rgba(15, 20, 32, 0.78);
   border-bottom: 1px solid rgba(255, 255, 255, 0.10);
   color: #f8fafc;
@@ -2694,8 +2901,10 @@ html[data-theme="dark"] .imgwrap img {
   transition: background .15s ease;
 }
 
-.lb-bar button:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.20);
+@media (hover: hover) and (pointer: fine) {
+  .lb-bar button:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.20);
+  }
 }
 
 .lb-bar button:disabled {
@@ -2711,23 +2920,31 @@ html[data-theme="dark"] .imgwrap img {
 }
 
 .lb-stage {
+  position: relative;
   flex: 1;
   min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 18px;
-  overflow: auto;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
   cursor: zoom-out;
 }
 
 #lightboxImg {
   max-width: 94vw;
   max-height: calc(100vh - 96px);
+  max-height: calc(100dvh - 96px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   object-fit: contain;
   border-radius: 10px;
   cursor: zoom-in;
-  transition: transform .18s ease;
+  transform-origin: center center;
+  will-change: transform;
+  transition: transform .18s cubic-bezier(.22, 1, .36, 1);
+  -webkit-user-drag: none;
+  user-select: none;
 }
 
 #lightboxImg.light-plate {
@@ -2738,11 +2955,12 @@ html[data-theme="dark"] .imgwrap img {
 }
 
 #lightboxImg.zoomed {
-  max-width: none;
-  max-height: none;
-  zoom: 1.65;
-  margin: auto;
-  cursor: zoom-out;
+  cursor: grab;
+}
+
+#lightboxImg.dragging {
+  transition: none;
+  cursor: grabbing;
 }
 
 /* 模态框 */
@@ -2816,9 +3034,11 @@ html[data-theme="dark"] .imgwrap img {
   transition: all .12s ease;
 }
 
-.modal-close:hover {
-  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
-  color: var(--accent);
+@media (hover: hover) and (pointer: fine) {
+  .modal-close:hover {
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+    color: var(--accent);
+  }
 }
 
 .modal-body {
@@ -2886,11 +3106,13 @@ html[data-theme="dark"] .imgwrap img {
   transition: all .14s ease;
 }
 
-.modal-actions button:hover,
-#syncPullNowBtn:hover {
-  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
-  color: var(--accent);
-  background: var(--accent-soft);
+@media (hover: hover) and (pointer: fine) {
+  .modal-actions button:hover,
+  #syncPullNowBtn:hover {
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
 }
 
 #syncUnlockBtn,
@@ -2902,12 +3124,14 @@ html[data-theme="dark"] .imgwrap img {
   font-weight: 600;
 }
 
-#syncUnlockBtn:hover,
-#syncPushNowBtn:hover,
-.modal-actions .btn-primary:hover {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
-  color: var(--accent-ink);
+@media (hover: hover) and (pointer: fine) {
+  #syncUnlockBtn:hover,
+  #syncPushNowBtn:hover,
+  .modal-actions .btn-primary:hover {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+    color: var(--accent-ink);
+  }
 }
 
 .kbd-grid {
@@ -2951,10 +3175,16 @@ html[data-theme="dark"] .imgwrap img {
   transition: transform .15s ease, border-color .15s ease, color .15s ease;
 }
 
-#toTopBtn.to-top-btn:hover {
-  transform: translateY(-2px);
-  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
-  color: var(--accent);
+@media (hover: hover) and (pointer: fine) {
+  #toTopBtn.to-top-btn:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+    color: var(--accent);
+  }
+}
+
+.to-top-btn:active:not(:disabled) {
+  transform: scale(0.95);
 }
 
 /* Toast 轻提示 */
@@ -2989,7 +3219,58 @@ html[data-theme="dark"] #toast {
   transform: translateX(-50%) translateY(0);
 }
 
-/* ---------- 10. 移动端与窄屏响应式 (<= 900px 顶栏严格 <= 116px, 0 横向溢出) ---------- */
+/* ---------- 10. 多平台精细断点矩阵（Mac / Windows 缩放 / iPad 横竖屏 / iPhone Safari） ---------- */
+@media (min-width: 901px) and (max-width: 1180px) {
+  .app-shell {
+    gap: 12px;
+  }
+
+  nav#nav.sidebar {
+    width: 240px;
+  }
+
+  .brand-sub {
+    display: none;
+  }
+
+  div#crumbBar.crumb-bar {
+    max-width: 240px;
+  }
+}
+
+@media (min-width: 901px) and (max-height: 780px) {
+  .app-shell {
+    padding-top: max(8px, env(safe-area-inset-top));
+  }
+
+  nav#nav.sidebar {
+    top: 8px;
+    height: calc(100dvh - 16px);
+  }
+
+  header#appHeader.app-header {
+    top: 8px;
+    padding: 6px 10px;
+  }
+
+  .filterbar {
+    margin-top: 4px;
+    padding-top: 4px;
+  }
+
+  .focus-deck-bar {
+    padding: 7px 12px 9px;
+  }
+
+  .qcard.focus-card .qhead {
+    padding: 14px 20px 12px;
+  }
+
+  .qcard.focus-card .qbody {
+    padding: 14px 20px 18px;
+  }
+}
+
 @media (max-width: 900px) {
   header#appHeader.app-header {
     top: 8px;
@@ -2998,8 +3279,84 @@ html[data-theme="dark"] #toast {
   }
 
   .brand-sub,
-  kbd.kbd-hint,
-  .filterbar #crumbBar {
+  kbd.kbd-hint {
+    display: none;
+  }
+
+  .mobile-brand {
+    display: flex;
+  }
+
+  .filterbar {
+    margin-top: 6px;
+    padding-top: 6px;
+  }
+
+  .focus-deck-bar {
+    padding: 8px 10px 10px;
+    gap: 6px;
+  }
+}
+
+@media (min-width: 700px) and (max-width: 900px) {
+  .topbar {
+    gap: 6px;
+  }
+
+  .topbar-left {
+    gap: 6px;
+  }
+
+  .mobile-brand {
+    gap: 6px;
+  }
+
+  .mobile-brand .brand-logo {
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+  }
+
+  .mobile-brand h1 {
+    font-size: 13.5px;
+    gap: 4px;
+  }
+
+  .seg-btn {
+    padding: 0 7px;
+    font-size: 12px;
+    gap: 4px;
+  }
+
+  .search-wrap {
+    flex: 1 1 110px;
+    min-width: 90px;
+    max-width: 280px;
+  }
+
+  div#crumbBar.crumb-bar {
+    display: flex;
+    max-width: 220px;
+  }
+
+  .mobile-context-bar {
+    display: none !important;
+  }
+}
+
+@media (min-width: 700px) and (max-width: 820px) {
+  #syncLabel {
+    display: none;
+  }
+
+  .action-pill {
+    padding: 0 9px;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 699px) {
+  .filterbar div#crumbBar.crumb-bar {
     display: none;
   }
 
@@ -3059,18 +3416,6 @@ html[data-theme="dark"] #toast {
     max-width: none;
   }
 
-  .filterbar {
-    margin-top: 6px;
-    padding-top: 6px;
-  }
-
-  .focus-deck-bar {
-    padding: 8px 10px 10px;
-    gap: 6px;
-  }
-}
-
-@media (max-width: 699px) {
   .sol-bento {
     grid-template-columns: 1fr;
   }
@@ -3078,11 +3423,98 @@ html[data-theme="dark"] #toast {
   .sol-hero {
     grid-template-columns: 1fr;
   }
+
+  .mobile-context-bar:not([hidden]) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px 8px;
+    font-size: 12px;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--glass-line);
+    border-radius: 12px;
+  }
+
+  .mobile-crumb {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .mobile-crumb .cseg {
+    cursor: pointer;
+    color: var(--sub);
+    font-weight: 600;
+    padding: 1px 4px;
+    border-radius: 5px;
+  }
+
+  .focus-mobile-dock {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    position: fixed;
+    left: max(10px, env(safe-area-inset-left));
+    right: max(10px, env(safe-area-inset-right));
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    z-index: 38;
+    padding: 7px 10px;
+    border-radius: 16px;
+    background: var(--surface);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid var(--glass-line);
+    box-shadow: var(--shadow-bar);
+  }
+
+  .focus-mobile-dock .deck-btn {
+    height: 36px;
+    padding: 0 11px;
+    font-size: 12.5px;
+    border-radius: 11px;
+    flex-shrink: 0;
+  }
+
+  .focus-mobile-dock .deck-btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 600;
+  }
+
+  .focus-mobile-dock .focus-pos {
+    padding: 0 4px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  body.is-focus-view .app-shell {
+    padding-bottom: calc(84px + env(safe-area-inset-bottom));
+  }
+
+  body.is-focus-view #toTopBtn.to-top-btn {
+    bottom: calc(74px + env(safe-area-inset-bottom));
+  }
 }
 
 @media (max-width: 640px) {
+  header#appHeader.app-header {
+    padding: 6px 10px;
+  }
+
   .topbar {
     gap: 5px;
+  }
+
+  .filterbar {
+    margin-top: 5px;
+    padding-top: 5px;
   }
 
   #navToggle.icon-btn,
@@ -3214,6 +3646,77 @@ html[data-theme="dark"] #toast {
   .seg-btn {
     padding: 0 8px;
   }
+
+  .focus-mobile-dock .deck-btn {
+    padding: 0 9px;
+    font-size: 12px;
+  }
+}
+
+/* 触屏设备专属优化（放在窄屏规则之后确保 iOS 防放大 16px 字号不被覆盖） */
+@media (pointer: coarse) {
+  input#q,
+  input#navSearch,
+  #syncPinInput {
+    font-size: 16px;
+  }
+
+  input#q,
+  input#navSearch {
+    height: 32px;
+  }
+
+  #syncPinInput {
+    height: 40px;
+  }
+
+  .nd {
+    min-height: 38px;
+    padding: 8px 10px;
+  }
+
+  .popt,
+  .sopt {
+    min-height: 44px;
+  }
+
+  button.focus-jump-btn,
+  button.favg {
+    width: 34px;
+    height: 34px;
+  }
+
+  .menu-item {
+    min-height: 40px;
+  }
+
+  .deck-btn {
+    min-height: 34px;
+  }
+
+  .filterbar-scroll {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+}
+
+/* 手机横屏释放全部纵向阅读高度 */
+@media (max-height: 500px) and (orientation: landscape) {
+  header#appHeader.app-header {
+    position: relative;
+    top: 0;
+  }
+
+  .focus-mat-pane {
+    position: static;
+    max-height: none;
+    overflow-y: visible;
+  }
+
+  .focus-mobile-dock {
+    padding: 5px 8px;
+    bottom: max(6px, env(safe-area-inset-bottom));
+  }
 }
 
 </style>
@@ -3238,7 +3741,7 @@ html[data-theme="dark"] #toast {
             <circle cx="19" cy="14" r="1.5" fill="#ffffff"/>
           </svg>
           <span class="nav-title">行测考点</span>
-          <span class="ver-badge">v5.2</span>
+          <span class="ver-badge">v5.3</span>
         </div>
         <button id="navClose" class="icon-btn" type="button" aria-label="关闭目录">
           <svg class="ico ico-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -3280,7 +3783,7 @@ html[data-theme="dark"] #toast {
               <path d="M9 9.5h10M9 14h6.5M9 18.5h10" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
               <circle cx="19" cy="14" r="1.5" fill="#ffffff"/>
             </svg>
-            <h1>行测考点浏览器 <span class="ver-badge">v5.2</span></h1>
+            <h1>行测考点浏览器 <span class="ver-badge">v5.3</span></h1>
             <span class="brand-sub">9516 题 · 2173 图</span>
           </div>
           <div class="view-seg" role="group" aria-label="视图切换">
@@ -3409,6 +3912,10 @@ html[data-theme="dark"] #toast {
       <div id="stats" class="stats-grid"></div>
     </section>
 
+    <div id="mobileContextBar" class="mobile-context-bar" hidden>
+      <div id="mobileCrumb" class="mobile-crumb"></div>
+      <span id="mobilePstats" class="pstats-pill" hidden></span>
+    </div>
     <div id="hint" class="hint" hidden></div>
     <div id="list"><div class="empty">正在加载真题数据…</div></div>
   </main>
@@ -3494,6 +4001,7 @@ html[data-theme="dark"] #toast {
         <div class="bento-kv"><b>单题专注舱：</b>点击顶部「专注」或任意题卡右上角专注图标进入单题沉浸阅读，带共享材料的资料题在宽屏下自动左右分栏对照。</div>
         <div class="bento-kv"><b>错题重刷：</b>练习模式下答错或直接看答案会累计「曾错 N 次」，刷新后选项绝不锁死，可随时反复重刷。</div>
         <div class="bento-kv"><b>离线缓存：</b>点击右上角更多菜单中的「缓存题图」，即可离线查看全部题图与图形推理。</div>
+        <div class="bento-kv"><b>触屏与手势：</b>专注舱支持左右滑动切题与移动端底部快捷翻题；题图灯箱支持双指或滚轮缩放、拖拽平移与左右滑切图。</div>
       </div>
     </div>
   </div>
@@ -3507,7 +4015,7 @@ html[data-theme="dark"] #toast {
 <script id="progressStore" type="application/json">{}</script>
 <script id="syncBundle" type="application/json">{"salt":"ziM84MfPh7ijxVBLSWTS5Q==","verify":"5274cd59437939cf61cf46df43e9ce20810a480a459581848d788ced555016c4","ct":"uDsHPNrcPOvmfexAkPCjmQrixCH2GRavHK0oV67Lt30VlUMd1WfQQq+gRTlZ+VF74700Q4TphxM/QzY6Nvheo0TkvIgjHIzvMPOJo1ZOfcnoTqRC4gomkVDjgaek8rI4","gistId":"b93fb51bca84779f5298bc2f3700e8f1"}</script>
 <script>
-/* 行测考点浏览器 v5.2 PWA — Arc 岛屿工作台 & 双视图交互引擎 */
+/* 行测考点浏览器 v5.3 PWA — Arc 岛屿工作台 & 双视图交互引擎 */
 'use strict';
 
 let DATA = [];
@@ -3642,6 +4150,19 @@ const state = {
 };
 
 const $ = id => document.getElementById(id);
+const HAS_CLOUD_SYNC = (() => {
+  try {
+    const el = $('syncBundle');
+    const b = el && el.textContent ? JSON.parse(el.textContent) : null;
+    return Boolean(b && b.ct && b.salt && b.verify);
+  } catch (e) {
+    return false;
+  }
+})();
+const DATA_MODE = 'single';
+const INITIAL_YEAR = '2026';
+let shardsLoading = false;
+const loadedYears = new Set();
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 let toastTimer = null;
@@ -3759,8 +4280,11 @@ const PROG = loadInitialProg();
 const FAVS = new Set(PROG.favs);
 
 let syncConfig = null;
-try { syncConfig = JSON.parse(localStorage.getItem(SKEY) || 'null'); } catch (e) {}
+if (HAS_CLOUD_SYNC) {
+  try { syncConfig = JSON.parse(localStorage.getItem(SKEY) || 'null'); } catch (e) {}
+}
 let lastSyncInfo = '';
+const hasActiveCloud = () => Boolean(HAS_CLOUD_SYNC && syncConfig && syncConfig.token);
 
 let syncTimer = null;
 function persist(triggerCloud = true) {
@@ -3768,7 +4292,7 @@ function persist(triggerCloud = true) {
   PROG.favs = [...FAVS];
   try { localStorage.setItem(PKEY, JSON.stringify(PROG)); } catch (e) {}
   idbSet(PKEY, PROG);
-  if (triggerCloud && syncConfig && syncConfig.token) {
+  if (HAS_CLOUD_SYNC && triggerCloud && syncConfig && syncConfig.token) {
     clearTimeout(syncTimer);
     syncTimer = setTimeout(() => cloudPush(false), 1200);
   }
@@ -3776,6 +4300,7 @@ function persist(triggerCloud = true) {
 
 // ---------- PBKDF2 解密同步凭证与 Gist 同步 ----------
 async function unlockWithPin(pin) {
+  if (!HAS_CLOUD_SYNC) return null;
   let bundle = null;
   try { bundle = JSON.parse($('syncBundle').textContent); } catch (e) {}
   if (!bundle || !bundle.ct || !window.crypto || !crypto.subtle) return null;
@@ -3891,6 +4416,7 @@ async function initStorageAndSync() {
     renderNav();
     renderList();
   }
+  if (!HAS_CLOUD_SYNC) return;
   if (!syncConfig) {
     const idbSync = await idbGet(SKEY);
     if (idbSync && idbSync.token) {
@@ -4125,7 +4651,7 @@ function pass(r) {
 function getFilteredRows() {
   let rows = DATA.filter(pass);
   if (state.shuffled) {
-    if (!state.order) {
+    if (!state.order || state.order.length !== DATA.length) {
       state.order = [...DATA.keys()];
       for (let i = state.order.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -4148,6 +4674,7 @@ function hasActiveFilters() {
 function updateResetBtn() {
   const rb = $('resetFiltersBtn');
   if (rb) rb.hidden = !hasActiveFilters();
+  syncMobileContextBar();
 }
 
 function syncStatsPanel() {
@@ -4283,6 +4810,13 @@ function hlNav(text, q) {
   return out;
 }
 
+function syncBodyOverlayState() {
+  const overlayOpen =
+    isModalOpen() ||
+    Boolean(state.navOpen && window.innerWidth <= 900);
+  document.body.classList.toggle('modal-open', overlayOpen);
+}
+
 // ---------- 三级目录树（只更新 #navTree，永不重建 #navSearch） ----------
 function updateNavVisibility() {
   const nav = $('nav');
@@ -4297,6 +4831,7 @@ function updateNavVisibility() {
   if (backdrop) {
     backdrop.classList.toggle('show', state.navOpen && window.innerWidth <= 900);
   }
+  syncBodyOverlayState();
 }
 
 function renderNav() {
@@ -4781,9 +5316,13 @@ function setCardOpen(card, open) {
   }
 }
 
-// ---------- 灯箱画廊 ----------
+// ---------- 灯箱画廊（Transform 缩放与拖拽引擎） ----------
 let lbGallery = [];
 let lbIdx = 0;
+let lbScale = 1;
+let lbTx = 0;
+let lbTy = 0;
+let lbSuppressClickUntil = 0;
 
 function syncLightboxButtons() {
   const img = $('lightboxImg');
@@ -4794,9 +5333,36 @@ function syncLightboxButtons() {
     bgBtn.innerHTML = svgIco(isLight ? 'moon' : 'sun', 'ico ico-sm') + `<span>${isLight ? '暗底' : '白底'}</span>`;
   }
   if (img && zoomBtn) {
-    const zoomed = img.classList.contains('zoomed');
+    const zoomed = lbScale > 1.01;
     zoomBtn.innerHTML = svgIco(zoomed ? 'zoomOut' : 'zoomIn', 'ico ico-sm') + `<span>${zoomed ? '还原' : '放大'}</span>`;
   }
+}
+
+function applyLightboxTransform(animate = true) {
+  const img = $('lightboxImg');
+  if (!img) return;
+  if (lbScale <= 1.01) {
+    lbScale = 1;
+    lbTx = 0;
+    lbTy = 0;
+  } else {
+    lbScale = Math.min(4, Math.max(1, lbScale));
+    const maxX = Math.max(60, (img.offsetWidth || 300) * lbScale * 0.48);
+    const maxY = Math.max(60, (img.offsetHeight || 300) * lbScale * 0.48);
+    lbTx = Math.max(-maxX, Math.min(maxX, lbTx));
+    lbTy = Math.max(-maxY, Math.min(maxY, lbTy));
+  }
+  img.classList.toggle('dragging', !animate);
+  img.classList.toggle('zoomed', lbScale > 1.01);
+  img.style.transform = `translate3d(${lbTx}px, ${lbTy}px, 0) scale(${lbScale})`;
+  syncLightboxButtons();
+}
+
+function resetLightboxTransform() {
+  lbScale = 1;
+  lbTx = 0;
+  lbTy = 0;
+  applyLightboxTransform(false);
 }
 
 function updateLightboxUI() {
@@ -4806,11 +5372,10 @@ function updateLightboxUI() {
   const next = $('lbNext');
   if (!img || !lbGallery.length) return;
   img.src = lbGallery[lbIdx];
-  img.classList.remove('zoomed');
+  resetLightboxTransform();
   if (cnt) cnt.textContent = `${lbIdx + 1} / ${lbGallery.length}`;
   if (prev) prev.disabled = lbGallery.length <= 1;
   if (next) next.disabled = lbGallery.length <= 1;
-  syncLightboxButtons();
 }
 
 function openLightboxFromImg(el) {
@@ -4838,16 +5403,17 @@ function openLightboxFromImg(el) {
   lb.hidden = false;
   lb.classList.add('show');
   lb.style.display = 'flex';
+  syncBodyOverlayState();
 }
 
 function closeLightbox() {
   const lb = $('lightbox');
-  const img = $('lightboxImg');
   if (!lb) return;
   lb.hidden = true;
   lb.classList.remove('show');
   lb.style.display = 'none';
-  if (img) img.classList.remove('zoomed');
+  resetLightboxTransform();
+  syncBodyOverlayState();
 }
 
 function bindCard(card) {
@@ -4939,7 +5505,7 @@ function bindCard(card) {
       el.innerHTML = svgIco(on ? 'starFilled' : 'star', 'ico ico-sm');
       persist();
       renderStats();
-      toast(on ? '已收藏（已自动同步）' : '已取消收藏');
+      toast(on ? (hasActiveCloud() ? '已收藏（已自动同步）' : '已收藏') : '已取消收藏');
     };
   });
 
@@ -5083,12 +5649,14 @@ function updatePStats() {
   if (!state.practice) {
     el.hidden = true;
     el.textContent = '';
+    syncMobileContextBar();
     return;
   }
   const s = practiceStats();
   const rate = s.done ? Math.round((s.right / s.done) * 100) : 0;
   el.hidden = false;
   el.textContent = `已答 ${s.done} · 对 ${s.right} · 错 ${s.wrong} · 正确率 ${rate}%`;
+  syncMobileContextBar();
 }
 
 function updStatsTag(card, qid) {
@@ -5111,8 +5679,9 @@ function seg(kind, label) {
   return `<span class="cseg" data-crumb="${kind}">${esc(label)}</span>`;
 }
 
-function bindCrumbSegments() {
-  $('crumb').querySelectorAll('.cseg').forEach(el => {
+function bindCrumbSegments(container = $('crumb')) {
+  if (!container) return;
+  container.querySelectorAll('.cseg').forEach(el => {
     el.onclick = () => {
       const k = el.dataset.crumb;
       if (k === 'mod') { state.t2 = null; state.t3 = null; }
@@ -5123,6 +5692,38 @@ function bindCrumbSegments() {
       scrollToContent();
     };
   });
+}
+
+function syncMobileContextBar() {
+  const bar = $('mobileContextBar');
+  const mCrumb = $('mobileCrumb');
+  const mPstats = $('mobilePstats');
+  if (!bar) return;
+  const crumbEl = $('crumb');
+  const pstatsEl = $('pstats');
+  if (mCrumb && crumbEl) {
+    mCrumb.innerHTML = crumbEl.innerHTML;
+    bindCrumbSegments(mCrumb);
+  }
+  if (mPstats && pstatsEl) {
+    mPstats.hidden = pstatsEl.hidden;
+    mPstats.textContent = pstatsEl.textContent;
+  }
+  const hasContent = Boolean((mCrumb && mCrumb.textContent.trim()) || (mPstats && !mPstats.hidden));
+  bar.hidden = !(hasContent && (hasActiveFilters() || state.practice));
+}
+
+function stepFocus(delta) {
+  if (state.view !== 'focus') return false;
+  const rows = getFilteredRows();
+  if (!rows.length) return false;
+  const nextIdx = state.focusIdx + delta;
+  if (nextIdx < 0 || nextIdx >= rows.length) return false;
+  state.focusIdx = nextIdx;
+  state.focusQid = rows[nextIdx].qid;
+  renderList();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  return true;
 }
 
 function renderFocusView(rows) {
@@ -5160,7 +5761,17 @@ function renderFocusView(rows) {
       `</div>` +
     `</div>`;
 
-  $('list').innerHTML = `<div class="focus-stage${hasMat ? ' has-mat' : ''}">${deckBar}${focusCardHtml(r, pos, isMaskedActive)}</div>`;
+  const mobileDock =
+    `<div class="focus-mobile-dock" role="toolbar" aria-label="专注模式快捷翻题">` +
+      `<button id="focusDockPrev" class="deck-btn" type="button"${state.focusIdx <= 0 ? ' disabled' : ''}>${svgIco('arrowLeft', 'ico ico-sm')}<span>上一题</span></button>` +
+      (!state.practice
+        ? `<button id="focusDockMask" class="deck-btn${state.focusMasked ? ' on' : ''}" type="button" aria-pressed="${state.focusMasked ? 'true' : 'false'}">${svgIco(isMaskedActive ? 'eye' : (state.focusMasked ? 'eyeOff' : 'eye'), 'ico ico-sm')}<span>${isMaskedActive ? '揭晓解析' : (state.focusMasked ? '已遮挡' : '遮挡')}</span></button>`
+        : '') +
+      `<span class="focus-pos">${pos} / ${rows.length}</span>` +
+      `<button id="focusDockNext" class="deck-btn deck-btn-primary" type="button"${state.focusIdx >= rows.length - 1 ? ' disabled' : ''}><span>下一题</span>${svgIco('arrowRight', 'ico ico-sm')}</button>` +
+    `</div>`;
+
+  $('list').innerHTML = `<div class="focus-stage${hasMat ? ' has-mat' : ''}">${deckBar}${focusCardHtml(r, pos, isMaskedActive)}${mobileDock}</div>`;
 
   const card = $('list').querySelector('.qcard');
   if (card) bindCard(card);
@@ -5168,21 +5779,25 @@ function renderFocusView(rows) {
   if ($('focusPrevBtn')) {
     $('focusPrevBtn').onclick = e => {
       if (e.detail > 0) $('focusPrevBtn').blur();
-      if (state.focusIdx <= 0) return;
-      state.focusIdx--;
-      state.focusQid = rows[state.focusIdx].qid;
-      renderList();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      stepFocus(-1);
     };
   }
   if ($('focusNextBtn')) {
     $('focusNextBtn').onclick = e => {
       if (e.detail > 0) $('focusNextBtn').blur();
-      if (state.focusIdx >= rows.length - 1) return;
-      state.focusIdx++;
-      state.focusQid = rows[state.focusIdx].qid;
-      renderList();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      stepFocus(1);
+    };
+  }
+  if ($('focusDockPrev')) {
+    $('focusDockPrev').onclick = e => {
+      if (e.detail > 0) $('focusDockPrev').blur();
+      stepFocus(-1);
+    };
+  }
+  if ($('focusDockNext')) {
+    $('focusDockNext').onclick = e => {
+      if (e.detail > 0) $('focusDockNext').blur();
+      stepFocus(1);
     };
   }
   if ($('focusMaskBtn')) {
@@ -5190,6 +5805,18 @@ function renderFocusView(rows) {
       if (e.detail > 0) $('focusMaskBtn').blur();
       state.focusMasked = !state.focusMasked;
       if (state.focusMasked) state.focusRevealed.clear();
+      renderList();
+    };
+  }
+  if ($('focusDockMask')) {
+    $('focusDockMask').onclick = e => {
+      if (e.detail > 0) $('focusDockMask').blur();
+      if (!state.practice && state.focusMasked && !state.focusRevealed.has(r.qid)) {
+        state.focusRevealed.add(r.qid);
+      } else {
+        state.focusMasked = !state.focusMasked;
+        if (state.focusMasked) state.focusRevealed.clear();
+      }
       renderList();
     };
   }
@@ -5203,10 +5830,7 @@ function renderFocusView(rows) {
   }
 }
 
-function renderList() {
-  if (!DATA.length) return;
-  const rows = getFilteredRows();
-
+function renderCrumb(rows) {
   let path = state.mod ? seg('mod', state.mod) : '<b>全部题库</b>';
   if (state.t2) path += ' › ' + seg('t2', state.t2);
   if (state.t3) path += ' › ' + seg('t3', state.t3);
@@ -5216,6 +5840,20 @@ function renderList() {
     `${state.onlyDoubt ? ' · 疑点' : ''}${state.onlyImg ? ' · 图片' : ''}` +
     `${state.onlyFav ? ' · 收藏' : ''}${state.onlyWrong ? ' · 错题' : ''}` +
     `${state.shuffled ? ' · 随机' : ''}`;
+  bindCrumbSegments($('crumb'));
+  syncMobileContextBar();
+}
+
+function renderList() {
+  document.body.classList.toggle('is-focus-view', state.view === 'focus');
+  if (!DATA.length) return;
+  if (shardsLoading && state.year && !loadedYears.has(state.year)) {
+    if ($('hint')) { $('hint').hidden = true; $('hint').textContent = ''; }
+    $('list').innerHTML = `<div class="empty">正在加载 ${esc(state.year)} 年真题数据…</div>`;
+    return;
+  }
+  const rows = getFilteredRows();
+  renderCrumb(rows);
 
   const hintEl = $('hint');
   if (hintEl) {
@@ -5247,7 +5885,6 @@ function renderList() {
   if (state.view === 'focus') {
     renderFocusView(rows);
     updatePStats();
-    bindCrumbSegments();
     return;
   }
 
@@ -5267,7 +5904,6 @@ function renderList() {
     };
   }
   updatePStats();
-  bindCrumbSegments();
 }
 
 function scrollToContent() {
@@ -5311,6 +5947,7 @@ function syncExpandAllBtn() {
 }
 
 function syncToggles() {
+  document.body.classList.toggle('is-focus-view', state.view === 'focus');
   const vStream = $('viewStreamBtn');
   const vFocus = $('viewFocusBtn');
   if (vStream) {
@@ -5549,11 +6186,11 @@ if ($('clearProgBtn')) {
     state.answers = {};
     try { localStorage.setItem(PKEY, JSON.stringify(PROG)); } catch (err) {}
     idbSet(PKEY, PROG);
-    if (syncConfig && syncConfig.token) {
+    if (HAS_CLOUD_SYNC && syncConfig && syncConfig.token) {
       cloudPush(false);
     }
     render();
-    toast('已清空本地与云端记录');
+    toast(hasActiveCloud() ? '已清空本地与云端记录' : '已清空本地学习记录');
   };
 }
 
@@ -5597,15 +6234,18 @@ function renderSyncModal() {
 }
 
 function openSyncModal() {
+  if (!HAS_CLOUD_SYNC) return;
   renderSyncModal();
   const modal = $('syncModal');
   if (!modal) return;
   modal.hidden = false;
+  syncBodyOverlayState();
   if ($('syncPinInput')) $('syncPinInput').focus();
 }
 
 function closeSyncModal() {
   if ($('syncModal')) $('syncModal').hidden = true;
+  syncBodyOverlayState();
 }
 
 if ($('syncBtn')) $('syncBtn').onclick = openSyncModal;
@@ -5666,9 +6306,11 @@ if ($('syncPushNowBtn')) {
 // ---------- 帮助弹窗 ----------
 function openHelpModal() {
   if ($('helpModal')) $('helpModal').hidden = false;
+  syncBodyOverlayState();
 }
 function closeHelpModal() {
   if ($('helpModal')) $('helpModal').hidden = true;
+  syncBodyOverlayState();
 }
 if ($('helpBtn')) $('helpBtn').onclick = openHelpModal;
 if ($('helpModalClose')) $('helpModalClose').onclick = closeHelpModal;
@@ -5733,7 +6375,7 @@ if ($('saveBtn')) {
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 30000);
-    toast('已导出轻量进度 JSON（同时已自动保存在本地与云端）');
+    toast(hasActiveCloud() ? '已导出轻量进度 JSON（同时已自动保存在本地与云端）' : '已导出轻量进度 JSON（本地已自动保存）');
   };
 }
 
@@ -5787,7 +6429,7 @@ function importProgressText(text, label) {
   renderNav();
   renderList();
   syncToggles();
-  toast('导入完成：新增 ' + added + ' 条，合并 ' + merged + ' 条' + (label ? '（' + label + '）' : '') + '，已自动同步云端');
+  toast('导入完成：新增 ' + added + ' 条，合并 ' + merged + ' 条' + (label ? '（' + label + '）' : '') + (hasActiveCloud() ? '，已自动同步云端' : ''));
   return true;
 }
 window.importProgressText = importProgressText;
@@ -5807,15 +6449,17 @@ if ($('importFile')) {
   };
 }
 
-// ---------- 灯箱交互 ----------
+// ---------- 灯箱交互（滚轮缩放 / 拖拽平移 / 双指捏合 / 滑切关闭） ----------
 if ($('lbClose')) $('lbClose').onclick = closeLightbox;
 if ($('lbStage')) {
   $('lbStage').onclick = e => {
+    if (Date.now() < lbSuppressClickUntil) return;
     if (e.target === $('lbStage')) closeLightbox();
   };
 }
 if ($('lightbox')) {
   $('lightbox').onclick = e => {
+    if (Date.now() < lbSuppressClickUntil) return;
     if (e.target === $('lightbox')) closeLightbox();
   };
 }
@@ -5844,23 +6488,247 @@ if ($('lbBgBtn')) {
     syncLightboxButtons();
   };
 }
-function toggleLightboxZoom() {
-  const img = $('lightboxImg');
-  if (!img) return;
-  img.classList.toggle('zoomed');
-  syncLightboxButtons();
+function toggleLightboxZoom(targetScale = 2) {
+  if (lbScale > 1.01) {
+    lbScale = 1;
+    lbTx = 0;
+    lbTy = 0;
+  } else {
+    lbScale = targetScale;
+    lbTx = 0;
+    lbTy = 0;
+  }
+  applyLightboxTransform(true);
 }
 if ($('lbZoomBtn')) {
   $('lbZoomBtn').onclick = e => {
     e.stopPropagation();
-    toggleLightboxZoom();
+    toggleLightboxZoom(2);
   };
 }
 if ($('lightboxImg')) {
   $('lightboxImg').onclick = e => {
     e.stopPropagation();
-    toggleLightboxZoom();
+    if (Date.now() < lbSuppressClickUntil) return;
+    toggleLightboxZoom(2);
   };
+}
+
+{
+  const stage = $('lbStage');
+  const lbImg = $('lightboxImg');
+  if (stage && lbImg) {
+    stage.addEventListener('wheel', e => {
+      if (!isLightboxOpen()) return;
+      e.preventDefault();
+      const factor = e.deltaY < 0 ? 1.14 : 1 / 1.14;
+      const next = Math.min(4, Math.max(1, lbScale * factor));
+      if (Math.abs(next - lbScale) < 0.005) return;
+      lbScale = next;
+      applyLightboxTransform(false);
+    }, { passive: false });
+
+    let dragState = null;
+    lbImg.addEventListener('mousedown', e => {
+      if (e.button !== 0 || lbScale <= 1.01) return;
+      e.preventDefault();
+      dragState = { x0: e.clientX, y0: e.clientY, tx0: lbTx, ty0: lbTy, moved: false };
+    });
+    document.addEventListener('mousemove', e => {
+      if (!dragState) return;
+      const dx = e.clientX - dragState.x0;
+      const dy = e.clientY - dragState.y0;
+      if (Math.hypot(dx, dy) >= 5) dragState.moved = true;
+      if (!dragState.moved) return;
+      lbTx = dragState.tx0 + dx;
+      lbTy = dragState.ty0 + dy;
+      applyLightboxTransform(false);
+    });
+    document.addEventListener('mouseup', () => {
+      if (!dragState) return;
+      if (dragState.moved) lbSuppressClickUntil = Date.now() + 120;
+      dragState = null;
+      applyLightboxTransform(true);
+    });
+
+    let touchState = null;
+    let lastTapTime = 0;
+    let singleTapTimer = null;
+    const touchDist = (a, b) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+    const touchMid = (a, b) => ({ x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 });
+
+    stage.addEventListener('touchstart', e => {
+      if (!isLightboxOpen()) return;
+      if (e.touches.length === 2) {
+        clearTimeout(singleTapTimer);
+        touchState = {
+          mode: 'pinch',
+          dist0: touchDist(e.touches[0], e.touches[1]),
+          mid0: touchMid(e.touches[0], e.touches[1]),
+          scale0: lbScale,
+          tx0: lbTx,
+          ty0: lbTy
+        };
+      } else if (e.touches.length === 1) {
+        const t = e.touches[0];
+        touchState = {
+          mode: 'single',
+          x0: t.clientX,
+          y0: t.clientY,
+          tx0: lbTx,
+          ty0: lbTy,
+          t0: Date.now(),
+          moved: false,
+          onImg: e.target === lbImg
+        };
+      }
+    }, { passive: true });
+
+    stage.addEventListener('touchmove', e => {
+      if (!isLightboxOpen() || !touchState) return;
+      e.preventDefault();
+      if (touchState.mode === 'pinch' && e.touches.length === 2) {
+        const d = touchDist(e.touches[0], e.touches[1]);
+        const mid = touchMid(e.touches[0], e.touches[1]);
+        lbScale = Math.min(4, Math.max(1, touchState.scale0 * (d / Math.max(1, touchState.dist0))));
+        lbTx = touchState.tx0 + (mid.x - touchState.mid0.x);
+        lbTy = touchState.ty0 + (mid.y - touchState.mid0.y);
+        applyLightboxTransform(false);
+      } else if (touchState.mode === 'single' && e.touches.length === 1) {
+        const t = e.touches[0];
+        const dx = t.clientX - touchState.x0;
+        const dy = t.clientY - touchState.y0;
+        if (Math.hypot(dx, dy) > 6) touchState.moved = true;
+        if (lbScale > 1.01) {
+          lbTx = touchState.tx0 + dx;
+          lbTy = touchState.ty0 + dy;
+          applyLightboxTransform(false);
+        }
+      }
+    }, { passive: false });
+
+    const endTouch = e => {
+      if (!touchState) return;
+      lbSuppressClickUntil = Date.now() + 350;
+      if (touchState.mode === 'pinch') {
+        if (e.touches.length < 2) {
+          touchState = null;
+          applyLightboxTransform(true);
+        }
+        return;
+      }
+      if (touchState.mode === 'single' && e.changedTouches.length === 1) {
+        const ct = e.changedTouches[0];
+        const dx = ct.clientX - touchState.x0;
+        const dy = ct.clientY - touchState.y0;
+        const dt = Date.now() - touchState.t0;
+        const { moved, onImg } = touchState;
+        touchState = null;
+        if (moved) {
+          if (lbScale <= 1.01 && dt < 600) {
+            if (dy >= 90 && Math.abs(dy) > Math.abs(dx) * 1.5) {
+              closeLightbox();
+            } else if (Math.abs(dx) >= 56 && Math.abs(dx) > Math.abs(dy) * 1.6 && lbGallery.length > 1) {
+              lbIdx = (lbIdx + (dx < 0 ? 1 : -1) + lbGallery.length) % lbGallery.length;
+              updateLightboxUI();
+            }
+          } else if (lbScale > 1.01) {
+            applyLightboxTransform(true);
+          }
+        } else if (!onImg) {
+          closeLightbox();
+        } else {
+          const now = Date.now();
+          if (now - lastTapTime < 280) {
+            clearTimeout(singleTapTimer);
+            lastTapTime = 0;
+            toggleLightboxZoom(2.2);
+          } else {
+            lastTapTime = now;
+            clearTimeout(singleTapTimer);
+            singleTapTimer = setTimeout(() => toggleLightboxZoom(2), 290);
+          }
+        }
+      }
+    };
+    stage.addEventListener('touchend', endTouch, { passive: true });
+    stage.addEventListener('touchcancel', () => { touchState = null; applyLightboxTransform(true); }, { passive: true });
+  }
+}
+
+// ---------- 触屏滑屏手势（专注舱切题 & 移动端左滑关闭抽屉） ----------
+{
+  const listEl = $('list');
+  if (listEl) {
+    let fTouch = null;
+    listEl.addEventListener('touchstart', e => {
+      if (state.view !== 'focus' || isModalOpen() || e.touches.length !== 1) {
+        fTouch = null;
+        return;
+      }
+      const t = e.touches[0];
+      if (t.clientX < 32 || t.clientX > window.innerWidth - 32) {
+        fTouch = null;
+        return;
+      }
+      if (e.target && e.target.closest('table, .md table, .filterbar-scroll, pre, code, input, textarea, select')) {
+        fTouch = null;
+        return;
+      }
+      fTouch = { x: t.clientX, y: t.clientY, t: Date.now(), valid: true };
+    }, { passive: true });
+
+    listEl.addEventListener('touchmove', e => {
+      if (fTouch && e.touches.length > 1) fTouch.valid = false;
+    }, { passive: true });
+
+    listEl.addEventListener('touchend', e => {
+      if (!fTouch || !fTouch.valid || state.view !== 'focus' || isModalOpen() || e.changedTouches.length !== 1) {
+        fTouch = null;
+        return;
+      }
+      const sel = window.getSelection ? window.getSelection().toString() : '';
+      const ct = e.changedTouches[0];
+      const dx = ct.clientX - fTouch.x;
+      const dy = ct.clientY - fTouch.y;
+      const dt = Date.now() - fTouch.t;
+      fTouch = null;
+      if (sel) return;
+      if (dt < 700 && Math.abs(dx) >= 64 && Math.abs(dx) > Math.abs(dy) * 1.8) {
+        stepFocus(dx < 0 ? 1 : -1);
+      }
+    }, { passive: true });
+
+    listEl.addEventListener('touchcancel', () => { fTouch = null; }, { passive: true });
+  }
+
+  const navEl = $('nav');
+  if (navEl) {
+    let nTouch = null;
+    navEl.addEventListener('touchstart', e => {
+      if (window.innerWidth > 900 || !state.navOpen || e.touches.length !== 1) {
+        nTouch = null;
+        return;
+      }
+      nTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now() };
+    }, { passive: true });
+
+    navEl.addEventListener('touchend', e => {
+      if (!nTouch || window.innerWidth > 900 || !state.navOpen || e.changedTouches.length !== 1) {
+        nTouch = null;
+        return;
+      }
+      const ct = e.changedTouches[0];
+      const dx = ct.clientX - nTouch.x;
+      const dy = ct.clientY - nTouch.y;
+      const dt = Date.now() - nTouch.t;
+      nTouch = null;
+      if (dt < 700 && dx < -55 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        state.navOpen = false;
+        updateNavVisibility();
+      }
+    }, { passive: true });
+  }
 }
 
 // ---------- 回到顶部 & 视口自适应 ----------
@@ -5953,22 +6821,12 @@ document.addEventListener('keydown', e => {
 
     if (e.key === 'ArrowLeft' || key === 'k') {
       e.preventDefault();
-      if (state.focusIdx > 0) {
-        state.focusIdx--;
-        state.focusQid = rows[state.focusIdx].qid;
-        renderList();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
+      stepFocus(-1);
       return;
     }
     if (e.key === 'ArrowRight' || key === 'j') {
       e.preventDefault();
-      if (state.focusIdx < rows.length - 1) {
-        state.focusIdx++;
-        state.focusQid = rows[state.focusIdx].qid;
-        renderList();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
+      stepFocus(1);
       return;
     }
     if ((e.key === ' ' || e.code === 'Space') && tag !== 'button' && tag !== 'a' && tag !== 'summary') {
@@ -5976,11 +6834,8 @@ document.addEventListener('keydown', e => {
       if (!state.practice && state.focusMasked && !state.focusRevealed.has(r.qid)) {
         state.focusRevealed.add(r.qid);
         renderList();
-      } else if ((!state.practice || state.answers[r.qid]) && state.focusIdx < rows.length - 1) {
-        state.focusIdx++;
-        state.focusQid = rows[state.focusIdx].qid;
-        renderList();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (!state.practice || state.answers[r.qid]) {
+        stepFocus(1);
       }
       return;
     }
@@ -6046,12 +6901,16 @@ document.addEventListener('keydown', e => {
 });
 
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && syncConfig && syncConfig.gistId) {
+  if (HAS_CLOUD_SYNC && document.visibilityState === 'visible' && syncConfig && syncConfig.gistId) {
     cloudPull(true);
   }
 });
 
 // ---------- 启动加载 ----------
+if (!HAS_CLOUD_SYNC) {
+  if ($('syncBtn')) $('syncBtn').hidden = true;
+  if ($('syncModal')) $('syncModal').hidden = true;
+}
 syncThemeBtn();
 syncStatsPanel();
 updateNavVisibility();
@@ -6059,21 +6918,107 @@ syncToggles();
 syncHeaderHeight();
 initStorageAndSync();
 
-fetch('data.json?v=de83b8be')
-  .then(r => r.json())
-  .then(p => {
-    DATA = p.items || [];
-    MATS = p.mats || {};
-    IMGKIND = p.imgkind || {};
-    ALLYEARS = p.years || [];
-    MODULES = p.modules || [];
-    renderYearBtns();
-    render();
-    syncHeaderHeight();
-  })
-  .catch(err => {
-    $('list').innerHTML = `<div class="empty">题库加载失败：${esc(err.message)}，请刷新重试</div>`;
+function startDataLoad() {
+  const fetchJson = url => fetch(url).then(r => {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
   });
+
+  if (DATA_MODE !== 'sharded') {
+    fetchJson('data.json?v=de83b8be')
+      .then(p => {
+        DATA = p.items || [];
+        MATS = p.mats || {};
+        IMGKIND = p.imgkind || {};
+        ALLYEARS = p.years || [];
+        MODULES = p.modules || [];
+        ALLYEARS.forEach(y => loadedYears.add(y));
+        renderYearBtns();
+        render();
+        syncHeaderHeight();
+      })
+      .catch(err => {
+        $('list').innerHTML = `<div class="empty">题库加载失败：${esc(err.message)}，请刷新重试</div>`;
+      });
+    return;
+  }
+
+  shardsLoading = true;
+  const byYear = new Map();
+  const rebuildData = () => {
+    const prevLen = DATA.length;
+    DATA = ALLYEARS.flatMap(yr => byYear.get(yr) || []);
+    if (DATA.length !== prevLen) state.order = null;
+  };
+
+  const initTasks = [fetchJson('meta.json?v=de83b8be')];
+  if (INITIAL_YEAR) initTasks.push(fetchJson(`data-${encodeURIComponent(INITIAL_YEAR)}.json?v=de83b8be`));
+
+  Promise.all(initTasks)
+    .then(([meta, initItems]) => {
+      MATS = meta.mats || {};
+      IMGKIND = meta.imgkind || {};
+      ALLYEARS = meta.years || [];
+      MODULES = meta.modules || [];
+      if (INITIAL_YEAR && Array.isArray(initItems)) {
+        byYear.set(INITIAL_YEAR, initItems);
+        loadedYears.add(INITIAL_YEAR);
+      }
+      rebuildData();
+      renderYearBtns();
+      render();
+      syncHeaderHeight();
+
+      const restYears = ALLYEARS.filter(y => y !== INITIAL_YEAR);
+      if (!restYears.length) {
+        shardsLoading = false;
+        return null;
+      }
+
+      return Promise.all(
+        restYears.map(y =>
+          fetchJson(`data-${encodeURIComponent(y)}.json?v=de83b8be`).then(rows => {
+            byYear.set(y, Array.isArray(rows) ? rows : []);
+            loadedYears.add(y);
+            if (state.year === y) {
+              rebuildData();
+              render();
+            }
+          })
+        )
+      ).then(() => {
+        shardsLoading = false;
+        const prevTopKey = state.view === 'stream'
+          ? [...document.querySelectorAll('#list .qcard')].map(c => c.dataset.qid).join(',')
+          : '';
+        const hadMoreBtn = Boolean($('moreBtn'));
+        rebuildData();
+        renderStats();
+        renderNav();
+        if (state.view === 'stream' && prevTopKey) {
+          const nextRows = getFilteredRows();
+          const top = nextRows.slice(0, state.limit);
+          const nextTopKey = top.map(r => r.qid).join(',');
+          const needsMoreBtn = nextRows.length > top.length;
+          if (nextTopKey === prevTopKey && hadMoreBtn === needsMoreBtn) {
+            renderCrumb(nextRows);
+            updatePStats();
+            if ($('moreBtn')) {
+              $('moreBtn').textContent = `加载更多（已显示 ${top.length} / 共 ${nextRows.length} 题）`;
+            }
+            return;
+          }
+        }
+        renderList();
+      });
+    })
+    .catch(err => {
+      shardsLoading = false;
+      $('list').innerHTML = `<div class="empty">题库加载失败：${esc(err.message)}，请刷新重试</div>`;
+    });
+}
+
+startDataLoad();
 
 if ('serviceWorker' in navigator) {
   let refreshing = false;

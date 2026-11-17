@@ -1,4 +1,4 @@
-const CACHE_CORE = 'xingce-pwa-core-v5.2-de83b8be-f6980c23';
+const CACHE_CORE = 'xingce-pwa-core-v5.3-de83b8be-1a65bf63';
 const CACHE_IMG = 'xingce-pwa-img-v4.2';
 const CORE_ASSETS = [
   './',
