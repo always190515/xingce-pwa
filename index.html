@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
-<title>行测考点浏览器 v5.3 PWA（2022–2026）</title>
+<title>行测考点浏览器 v5.4 PWA（2022–2026）</title>
 <script>
 (function () {
   try {
@@ -26,7 +26,7 @@
 </script>
 <style>
 /* ==========================================================================
-   行测考点浏览器 v5.3 PWA — Arc / Modern SaaS 灵动岛屿样式系统 (styles.css)
+   行测考点浏览器 v5.4 PWA — Arc / Modern SaaS 灵动岛屿样式系统 (styles.css)
    Dual Views: Minimalist Stream Workspace & Single-Question Focus Cockpit
    ========================================================================== */
 
@@ -1569,7 +1569,9 @@ article.qcard.kb-focus {
 }
 
 button.focus-jump-btn,
+button.scratch-btn,
 button.favg {
+  position: relative;
   width: 28px;
   height: 28px;
   padding: 0;
@@ -1586,7 +1588,8 @@ button.favg {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  button.focus-jump-btn:hover {
+  button.focus-jump-btn:hover,
+  button.scratch-btn:hover {
     background: var(--accent-soft);
     color: var(--accent);
   }
@@ -1596,6 +1599,30 @@ button.favg {
     color: #f59e0b;
     transform: scale(1.06);
   }
+}
+
+button.scratch-btn.has-draft {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+button.scratch-btn.has-draft::after,
+.deck-btn.has-draft::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 1.5px var(--card);
+}
+
+.deck-btn.has-draft {
+  position: relative;
+  border-color: color-mix(in srgb, var(--accent) 42%, transparent);
+  color: var(--accent);
 }
 
 button.favg.on {
@@ -2497,6 +2524,9 @@ details.guan.doubt p {
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+.focus-stage .focus-card {
   animation: cardFloatIn .22s cubic-bezier(.22, 1, .36, 1);
 }
 
@@ -3246,6 +3276,404 @@ html[data-theme="dark"] .imgwrap img {
   justify-self: start;
 }
 
+/* 全屏透明草稿纸（粉笔式覆层）与悬浮草稿入口 */
+#scratchOverlay.scratch-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 85;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  transition: background-color .18s ease;
+}
+
+#scratchOverlay.scratch-overlay[hidden] {
+  display: none;
+}
+
+#scratchOverlay.scratch-overlay.bg-clear {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+html[data-theme="dark"] #scratchOverlay.scratch-overlay.bg-clear {
+  background: rgba(10, 12, 18, 0.05);
+}
+
+#scratchOverlay.scratch-overlay.bg-tint {
+  background: rgba(250, 251, 255, 0.72);
+  backdrop-filter: blur(2.5px);
+  -webkit-backdrop-filter: blur(2.5px);
+}
+
+html[data-theme="dark"] #scratchOverlay.scratch-overlay.bg-tint {
+  background: rgba(12, 16, 26, 0.76);
+  backdrop-filter: blur(2.5px);
+  -webkit-backdrop-filter: blur(2.5px);
+}
+
+#scratchOverlay.scratch-overlay.bg-grid {
+  background-color: rgba(252, 253, 255, 0.93);
+  background-image:
+    linear-gradient(to right, rgba(91, 91, 214, 0.085) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(91, 91, 214, 0.085) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+html[data-theme="dark"] #scratchOverlay.scratch-overlay.bg-grid {
+  background-color: rgba(15, 19, 30, 0.93);
+  background-image:
+    linear-gradient(to right, rgba(129, 140, 248, 0.11) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(129, 140, 248, 0.11) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+#scratchOverlay.scratch-overlay.is-passthrough {
+  pointer-events: none;
+  background: transparent !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+#scratchOverlay.scratch-overlay.is-passthrough #scratchCanvas {
+  pointer-events: none;
+  opacity: 0.72;
+}
+
+#scratchOverlay.scratch-overlay.is-passthrough #scratchToolbar,
+#scratchOverlay.scratch-overlay.is-passthrough #scratchMetaPill {
+  display: none;
+}
+
+#scratchCanvas.scratch-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: crosshair;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  transition: opacity .16s ease;
+}
+
+#scratchOverlay.tool-eraser #scratchCanvas {
+  cursor: cell;
+}
+
+.scratch-meta-pill {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: calc(100vw - 24px);
+  padding: 5px 7px 5px 12px;
+  border-radius: 999px;
+  background: var(--surface);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--shadow-bar);
+  color: var(--sub);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+#scratchOverlay.dock-top .scratch-meta-pill {
+  top: auto;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+}
+
+.scratch-q-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: min(56vw, 280px);
+  font-variant-numeric: tabular-nums;
+}
+
+.scratch-mini-btn {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: var(--card-2);
+  color: var(--sub);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background .14s ease, color .14s ease;
+}
+
+.scratch-pass-pill {
+  position: fixed;
+  right: max(14px, env(safe-area-inset-right));
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  z-index: 3;
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px 6px 13px;
+  border-radius: 999px;
+  background: var(--surface);
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--glass-line));
+  box-shadow: var(--shadow-md);
+}
+
+.scratch-pass-pill[hidden] {
+  display: none;
+}
+
+.scratch-pass-hint {
+  font-size: 12px;
+  color: var(--sub);
+  white-space: nowrap;
+}
+
+.scratch-toolbar {
+  position: fixed;
+  left: 50%;
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  max-width: calc(100vw - 20px - env(safe-area-inset-left) - env(safe-area-inset-right));
+  padding: 6px 8px;
+  border-radius: 16px;
+  background: var(--surface);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--shadow-md);
+}
+
+#scratchOverlay.dock-top .scratch-toolbar {
+  top: calc(12px + env(safe-area-inset-top));
+  bottom: auto;
+}
+
+.scratch-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.scratch-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.scratch-sep {
+  width: 1px;
+  height: 20px;
+  background: var(--line);
+  flex-shrink: 0;
+}
+
+.scratch-tool-btn,
+.scratch-size-btn,
+.scratch-swatch {
+  height: 32px;
+  min-width: 32px;
+  padding: 0 7px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--sub);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background .14s ease, color .14s ease, border-color .14s ease, transform .12s ease;
+}
+
+.scratch-tool-btn:disabled {
+  opacity: .34;
+  cursor: not-allowed;
+}
+
+.scratch-tool-btn.on,
+.scratch-size-btn.on {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 32%, transparent);
+}
+
+.scratch-swatch {
+  padding: 0;
+  width: 28px;
+  min-width: 28px;
+  border-radius: 999px;
+}
+
+.scratch-swatch .swatch-dot {
+  display: block;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.16);
+  transition: transform .14s ease;
+}
+
+.scratch-swatch.on {
+  background: var(--card-2);
+  border-color: var(--accent);
+}
+
+.scratch-swatch.on .swatch-dot {
+  transform: scale(1.12);
+}
+
+.swatch-dot.sw-ink { background: #111827; }
+html[data-theme="dark"] .swatch-dot.sw-ink { background: #f1f5f9; }
+.swatch-dot.sw-blue { background: #2563eb; }
+html[data-theme="dark"] .swatch-dot.sw-blue { background: #60a5fa; }
+.swatch-dot.sw-red { background: #dc2626; }
+html[data-theme="dark"] .swatch-dot.sw-red { background: #f87171; }
+.swatch-dot.sw-green { background: #059669; }
+html[data-theme="dark"] .swatch-dot.sw-green { background: #34d399; }
+
+.scratch-size-btn {
+  width: 28px;
+  min-width: 28px;
+  padding: 0;
+}
+
+.scratch-size-btn i {
+  display: block;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.scratch-btn-accent {
+  height: 32px;
+  padding: 0 11px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background .14s ease, transform .12s ease;
+}
+
+.scratch-btn-accent:active,
+.scratch-tool-btn:active:not(:disabled),
+.scratch-fab:active {
+  transform: scale(0.95);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .scratch-mini-btn:hover,
+  .scratch-tool-btn:hover:not(:disabled),
+  .scratch-size-btn:hover {
+    background: var(--card-2);
+    color: var(--ink);
+  }
+
+  .scratch-tool-btn.on:hover:not(:disabled),
+  .scratch-size-btn.on:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .scratch-tool-btn.scratch-danger-btn:hover:not(:disabled) {
+    background: var(--bad-bg);
+    color: var(--bad);
+  }
+
+  .scratch-btn-accent:hover {
+    background: var(--accent-hover);
+  }
+}
+
+/* 右下角悬浮草稿按钮 */
+#scratchFab.scratch-fab {
+  position: fixed;
+  right: 20px;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  z-index: 40;
+  height: 40px;
+  padding: 0 14px 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-line);
+  background: var(--surface);
+  backdrop-filter: blur(14px) saturate(170%);
+  -webkit-backdrop-filter: blur(14px) saturate(170%);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: bottom .18s ease, transform .15s ease, border-color .15s ease, color .15s ease, background .15s ease;
+}
+
+body.has-to-top #scratchFab.scratch-fab {
+  bottom: calc(70px + env(safe-area-inset-bottom));
+}
+
+body.scratch-open #scratchFab.scratch-fab {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+}
+
+#scratchFab.scratch-fab .scratch-dot {
+  display: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+#scratchFab.scratch-fab.has-draft {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  color: var(--accent);
+}
+
+#scratchFab.scratch-fab.has-draft .scratch-dot {
+  display: inline-block;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  #scratchFab.scratch-fab:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+    color: var(--accent);
+  }
+}
+
 /* 悬浮回顶钮 */
 #toTopBtn.to-top-btn {
   position: fixed;
@@ -3310,6 +3738,10 @@ html[data-theme="dark"] #toast {
 #toast.show {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+}
+
+body.scratch-open:not(.scratch-dock-top) #toast {
+  bottom: calc(82px + env(safe-area-inset-bottom));
 }
 
 /* ---------- 10. 多平台精细断点矩阵（Mac / Windows 缩放 / iPad 横竖屏 / iPhone Safari） ---------- */
@@ -3594,6 +4026,54 @@ html[data-theme="dark"] #toast {
   body.is-focus-view #toTopBtn.to-top-btn {
     bottom: calc(74px + env(safe-area-inset-bottom));
   }
+
+  body.is-focus-view #scratchFab.scratch-fab {
+    display: none;
+  }
+
+  #focusScratchBtn {
+    display: none;
+  }
+
+  body.is-focus-view .scratch-pass-pill {
+    bottom: calc(72px + env(safe-area-inset-bottom));
+  }
+
+  body.scratch-open:not(.scratch-dock-top) #toast {
+    bottom: calc(112px + env(safe-area-inset-bottom));
+  }
+
+  .scratch-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 5px;
+    padding: 7px 8px;
+    border-radius: 15px;
+    width: calc(100vw - 16px - env(safe-area-inset-left) - env(safe-area-inset-right));
+    max-width: 440px;
+  }
+
+  .scratch-sep-row {
+    display: none;
+  }
+
+  .scratch-row {
+    justify-content: space-between;
+    width: 100%;
+    gap: 4px;
+  }
+
+  .scratch-tool-btn,
+  .scratch-size-btn {
+    height: 34px;
+    min-width: 30px;
+    padding: 0 6px;
+  }
+
+  .scratch-btn-accent {
+    height: 34px;
+    padding: 0 10px;
+  }
 }
 
 @media (max-width: 640px) {
@@ -3713,6 +4193,18 @@ html[data-theme="dark"] #toast {
     width: 38px;
     height: 38px;
   }
+
+  #scratchFab.scratch-fab {
+    right: 14px;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    height: 38px;
+    padding: 0 12px 0 10px;
+    font-size: 12.5px;
+  }
+
+  body.has-to-top #scratchFab.scratch-fab {
+    bottom: calc(64px + env(safe-area-inset-bottom));
+  }
 }
 
 @media (max-width: 420px) {
@@ -3740,9 +4232,37 @@ html[data-theme="dark"] #toast {
     padding: 0 8px;
   }
 
+  .focus-mobile-dock {
+    gap: 4px;
+    padding: 6px 8px;
+  }
+
   .focus-mobile-dock .deck-btn {
-    padding: 0 9px;
-    font-size: 12px;
+    padding: 0 8px;
+    font-size: 11.5px;
+    gap: 3px;
+  }
+
+  .focus-mobile-dock.has-mask #focusDockScratch {
+    padding: 0 8px;
+  }
+
+  .focus-mobile-dock.has-mask #focusDockScratch span {
+    display: none;
+  }
+
+  .scratch-tool-btn.scratch-text-btn {
+    padding: 0 6px;
+    font-size: 11.5px;
+    gap: 3px;
+  }
+
+  .scratch-sep {
+    display: none;
+  }
+
+  .scratch-pass-hint {
+    display: none;
   }
 }
 
@@ -3774,6 +4294,7 @@ html[data-theme="dark"] #toast {
   }
 
   button.focus-jump-btn,
+  button.scratch-btn,
   button.favg {
     width: 34px;
     height: 34px;
@@ -3810,6 +4331,23 @@ html[data-theme="dark"] #toast {
     padding: 5px 8px;
     bottom: max(6px, env(safe-area-inset-bottom));
   }
+
+  .scratch-toolbar {
+    bottom: max(6px, env(safe-area-inset-bottom));
+    padding: 4px 6px;
+    flex-direction: row;
+    width: auto;
+    max-width: calc(100vw - 16px - env(safe-area-inset-left) - env(safe-area-inset-right));
+    overflow-x: auto;
+  }
+
+  #scratchOverlay.dock-top .scratch-toolbar {
+    top: max(6px, env(safe-area-inset-top));
+  }
+
+  .scratch-row {
+    width: auto;
+  }
 }
 
 </style>
@@ -3834,7 +4372,7 @@ html[data-theme="dark"] #toast {
             <circle cx="19" cy="14" r="1.5" fill="#ffffff"/>
           </svg>
           <span class="nav-title">行测考点</span>
-          <span class="ver-badge">v5.3</span>
+          <span class="ver-badge">v5.4</span>
         </div>
         <button id="navClose" class="icon-btn" type="button" aria-label="关闭目录">
           <svg class="ico ico-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -3876,7 +4414,7 @@ html[data-theme="dark"] #toast {
               <path d="M9 9.5h10M9 14h6.5M9 18.5h10" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
               <circle cx="19" cy="14" r="1.5" fill="#ffffff"/>
             </svg>
-            <h1>行测考点浏览器 <span class="ver-badge">v5.3</span></h1>
+            <h1>行测考点浏览器 <span class="ver-badge">v5.4</span></h1>
             <span class="brand-sub">9516 题 · 2173 图</span>
           </div>
           <div class="view-seg" role="group" aria-label="视图切换">
@@ -4088,10 +4626,12 @@ html[data-theme="dark"] #toast {
         <kbd>Space</kbd><span>专注视图遮挡态揭晓解析，已揭晓或已作答后切下一题</span>
         <kbd>1–4 / a–d</kbd><span>练习模式下为焦点题卡选择选项</span>
         <kbd>f</kbd><span>收藏或取消收藏当前题卡</span>
-        <kbd>Esc</kbd><span>依次关闭灯箱、弹窗、菜单或移动端抽屉</span>
+        <kbd>s</kbd><span>打开或收起全屏草稿纸（书写态支持 P 画笔、E 橡皮、G 换底纹、C 清屏、Ctrl/Cmd+Z 撤销）</span>
+        <kbd>Esc</kbd><span>依次关闭灯箱、弹窗、草稿纸、菜单或移动端抽屉</span>
       </div>
       <div class="bento-card">
         <div class="bento-kv"><b>单题专注舱：</b>点击顶部「专注」或任意题卡右上角专注图标进入单题沉浸阅读，带共享材料的资料题在宽屏下自动左右分栏对照。</div>
+        <div class="bento-kv"><b>全屏草稿纸：</b>练习与背题模式均可随时呼出透明草稿覆层，直接对着题干图表列式演算；每道题在当前会话内独立记忆草稿，支持穿透模式边看笔迹边滚屏选答案、切换磨砂/方格纸底纹及触控笔防误触。</div>
         <div class="bento-kv"><b>错题重刷：</b>练习模式下答错或直接看答案会累计「曾错 N 次」，刷新后选项绝不锁死，可随时反复重刷。</div>
         <div class="bento-kv"><b>选项排除：</b>练习模式下长按某个选项可将其标灰并加删除线排除；短按或再次长按已排除的选项即可取消排除。</div>
         <div class="bento-kv"><b>离线缓存：</b>点击右上角更多菜单中的「缓存题图」，即可离线查看全部题图与图形推理。</div>
@@ -4101,6 +4641,90 @@ html[data-theme="dark"] #toast {
   </div>
 </div>
 
+<div id="scratchOverlay" class="scratch-overlay bg-clear dock-bottom" hidden role="region" aria-label="全屏草稿纸">
+  <canvas id="scratchCanvas" class="scratch-canvas"></canvas>
+  <div id="scratchMetaPill" class="scratch-meta-pill">
+    <span id="scratchQLabel" class="scratch-q-label">草稿纸</span>
+    <button id="scratchPosBtn" class="scratch-mini-btn" type="button" title="切换工具栏顶部/底部停靠" aria-label="切换工具栏位置">
+      <svg class="ico ico-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>
+    </button>
+  </div>
+  <div id="scratchPassPill" class="scratch-pass-pill" hidden>
+    <span class="scratch-pass-hint">穿透中 · 可滚动与作答</span>
+    <button id="scratchResumeBtn" class="scratch-btn-accent" type="button">
+      <svg class="ico ico-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+      <span>继续写</span>
+    </button>
+    <button id="scratchPassCloseBtn" class="scratch-tool-btn" type="button" aria-label="关闭草稿纸" title="关闭草稿纸">
+      <svg class="ico ico-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    </button>
+  </div>
+  <div id="scratchToolbar" class="scratch-toolbar" role="toolbar" aria-label="草稿纸工具栏">
+    <div class="scratch-row scratch-row-main">
+      <div class="scratch-group">
+        <button id="scratchPenBtn" class="scratch-tool-btn on" type="button" aria-pressed="true" title="画笔（快捷键 P）" aria-label="画笔">
+          <svg class="ico ico-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </button>
+        <button id="scratchEraserBtn" class="scratch-tool-btn" type="button" aria-pressed="false" title="橡皮擦（快捷键 E）" aria-label="橡皮擦">
+          <svg class="ico ico-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg>
+        </button>
+      </div>
+      <span class="scratch-sep" aria-hidden="true"></span>
+      <div class="scratch-group scratch-colors" role="group" aria-label="画笔颜色">
+        <button class="scratch-swatch on" type="button" data-scolor="ink" aria-label="自适应主色" title="主色（随浅/深色主题自动适配）" aria-pressed="true"><i class="swatch-dot sw-ink"></i></button>
+        <button class="scratch-swatch" type="button" data-scolor="blue" aria-label="蓝色" title="蓝色" aria-pressed="false"><i class="swatch-dot sw-blue"></i></button>
+        <button class="scratch-swatch" type="button" data-scolor="red" aria-label="红色" title="红色（标注重点）" aria-pressed="false"><i class="swatch-dot sw-red"></i></button>
+        <button class="scratch-swatch" type="button" data-scolor="green" aria-label="绿色" title="绿色" aria-pressed="false"><i class="swatch-dot sw-green"></i></button>
+      </div>
+      <span class="scratch-sep" aria-hidden="true"></span>
+      <div class="scratch-group scratch-sizes" role="group" aria-label="笔触粗细">
+        <button class="scratch-size-btn" type="button" data-ssize="2" title="细笔" aria-label="细笔" aria-pressed="false"><i style="width:4px;height:4px"></i></button>
+        <button class="scratch-size-btn on" type="button" data-ssize="3.4" title="中笔" aria-label="中笔" aria-pressed="true"><i style="width:7px;height:7px"></i></button>
+        <button class="scratch-size-btn" type="button" data-ssize="6" title="粗笔" aria-label="粗笔" aria-pressed="false"><i style="width:11px;height:11px"></i></button>
+      </div>
+    </div>
+    <span class="scratch-sep scratch-sep-row" aria-hidden="true"></span>
+    <div class="scratch-row scratch-row-sub">
+      <div class="scratch-group">
+        <button id="scratchBgBtn" class="scratch-tool-btn scratch-text-btn" type="button" title="切换底纹：透明 / 磨砂 / 方格（快捷键 G）">
+          <svg class="ico ico-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>
+          <span id="scratchBgLabel">透明</span>
+        </button>
+        <button id="scratchPenOnlyBtn" class="scratch-tool-btn scratch-text-btn" type="button" aria-pressed="false" title="仅触控笔书写（防手掌误触；需滚屏或选答案请切穿透或收起）">
+          <svg class="ico ico-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19 7-7 3 3-7 7-3-3z"/><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="m2 2 7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+          <span>仅笔</span>
+        </button>
+        <button id="scratchPassBtn" class="scratch-tool-btn scratch-text-btn" type="button" title="穿透模式：笔迹保持可见，直接滚动题面或点选答案">
+          <svg class="ico ico-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span>穿透</span>
+        </button>
+      </div>
+      <span class="scratch-sep" aria-hidden="true"></span>
+      <div class="scratch-group">
+        <button id="scratchUndoBtn" class="scratch-tool-btn" type="button" disabled title="撤销（Ctrl/Cmd+Z）" aria-label="撤销">
+          <svg class="ico ico-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+        </button>
+        <button id="scratchRedoBtn" class="scratch-tool-btn" type="button" disabled title="重做（Ctrl/Cmd+Shift+Z）" aria-label="重做">
+          <svg class="ico ico-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"/></svg>
+        </button>
+        <button id="scratchClearBtn" class="scratch-tool-btn scratch-danger-btn" type="button" disabled title="清屏（可点撤销恢复，快捷键 C）" aria-label="清空本题草稿">
+          <svg class="ico ico-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+        </button>
+      </div>
+      <span class="scratch-sep" aria-hidden="true"></span>
+      <button id="scratchCloseBtn" class="scratch-btn-accent" type="button" title="收起草稿纸（草稿自动保留，快捷键 S / Esc）">
+        <svg class="ico ico-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+        <span>收起</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<button id="scratchFab" class="scratch-fab" type="button" aria-label="打开全屏草稿纸" title="打开草稿纸（快捷键 S）">
+  <svg class="ico ico-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+  <span class="scratch-fab-label">草稿</span>
+  <i class="scratch-dot" aria-hidden="true"></i>
+</button>
 <button id="toTopBtn" class="to-top-btn" type="button" aria-label="回到顶部" title="回到顶部" hidden>
   <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>
 </button>
@@ -4109,7 +4733,7 @@ html[data-theme="dark"] #toast {
 <script id="progressStore" type="application/json">{}</script>
 <script id="syncBundle" type="application/json">{"salt":"ziM84MfPh7ijxVBLSWTS5Q==","verify":"5274cd59437939cf61cf46df43e9ce20810a480a459581848d788ced555016c4","ct":"uDsHPNrcPOvmfexAkPCjmQrixCH2GRavHK0oV67Lt30VlUMd1WfQQq+gRTlZ+VF74700Q4TphxM/QzY6Nvheo0TkvIgjHIzvMPOJo1ZOfcnoTqRC4gomkVDjgaek8rI4","gistId":"b93fb51bca84779f5298bc2f3700e8f1"}</script>
 <script>
-/* 行测考点浏览器 v5.3 PWA — Arc 岛屿工作台 & 双视图交互引擎 */
+/* 行测考点浏览器 v5.4 PWA — Arc 岛屿工作台 & 双视图交互引擎 */
 'use strict';
 
 let DATA = [];
@@ -4202,6 +4826,7 @@ const PKEY = 'xingce.explorer.progress.v1';
 const SKEY = 'xingce.explorer.sync.v1';
 const TKEY = 'xingce.explorer.theme.v1';
 const VKEY = 'xingce.explorer.view.v1';
+const DKEY = 'xingce.explorer.scratch.pref.v1';
 const IDB_NAME = 'xingce_pwa_db';
 const IDB_STORE = 'kv';
 const IMG_CACHE_NAME = 'xingce-pwa-img-v4.2';
@@ -4235,6 +4860,11 @@ const state = {
   focusRevealed: new Set(),
   answers: {}, // 仅存当前会话，刷新绝不锁死题目
   excluded: {}, // 仅存当前会话，练习模式排除选项 Map<qid, Set<key>>
+  drafts: new Map(), // 仅存当前会话内存：qid -> { strokes: [], undo: [], redo: [] }
+  scratchOpen: false,
+  scratchPass: false,
+  scratchQid: null,
+  scratchLabel: '',
   onlyFav: false,
   onlyWrong: false,
   limit: 40,
@@ -4553,6 +5183,9 @@ function toggleTheme() {
   document.documentElement.dataset.theme = next;
   try { localStorage.setItem(TKEY, next); } catch (e) {}
   syncThemeBtn();
+  if (state.scratchOpen && typeof redrawScratchCanvas === 'function') {
+    redrawScratchCanvas();
+  }
 }
 
 const headerEl = $('appHeader') || document.querySelector('header.app-header');
@@ -4909,6 +5542,7 @@ function hlNav(text, q) {
 function syncBodyOverlayState() {
   const overlayOpen =
     isModalOpen() ||
+    isScratchBlocking() ||
     Boolean(state.navOpen && window.innerWidth <= 900);
   document.body.classList.toggle('modal-open', overlayOpen);
 }
@@ -5230,7 +5864,11 @@ function buildCardHead(r, idx, headImgs, optsKeys, canPractice, picked, isFocus)
     ? `<span class="tag lastst ${rc.last === '!' || !isRight(r, rc.last) ? 'bad' : 'st'}">上次${rc.last === '!' ? '看答案' : isRight(r, rc.last) ? '答对' : '答错'}</span>`
     : '';
   const isFav = FAVS.has(r.qid);
+  const hasDraftNow = hasDraft(r.qid);
   const favBtn = `<button class="favg ${isFav ? 'on' : ''}" type="button" data-fav="${r.qid}" aria-label="${isFav ? '取消收藏' : '收藏本题'}" title="${isFav ? '取消收藏' : '收藏本题'}">${svgIco(isFav ? 'starFilled' : 'star', 'ico ico-sm')}</button>`;
+  const scratchBtn = isFocus
+    ? ''
+    : `<button class="scratch-btn${hasDraftNow ? ' has-draft' : ''}" type="button" data-scratch-qid="${r.qid}" aria-label="${hasDraftNow ? '打开本题草稿纸（已有笔迹）' : '打开本题草稿纸'}" title="${hasDraftNow ? '打开本题草稿纸（已有笔迹）' : '打开本题草稿纸'}">${svgIco('edit', 'ico ico-sm')}</button>`;
   const focusJumpBtn = isFocus
     ? ''
     : `<button class="focus-jump-btn" type="button" data-focus-qid="${r.qid}" aria-label="在专注舱打开本题" title="在单题专注舱中打开">${svgIco('focus', 'ico ico-sm')}</button>`;
@@ -5246,7 +5884,7 @@ function buildCardHead(r, idx, headImgs, optsKeys, canPractice, picked, isFocus)
       `<span class="src">${esc(r.yr)} · ${esc(r.juan)} · ${r.qid}</span>` +
       (r.iq ? `<span class="tag imgq" title="含原图或公式图">${svgIco('image', 'ico ico-sm')}<span>${nImgs > 1 ? nImgs + '图' : '图'}</span></span>` : '') +
       (r.doubt ? `<span class="tag doubt" title="含疑点标记">${svgIco('alert', 'ico ico-sm')}<span>疑点</span></span>` : '') +
-      `<div class="meta-right">${statusTag}${stTag}${lastTag}${focusJumpBtn}${favBtn}${chevEl}</div>` +
+      `<div class="meta-right">${statusTag}${stTag}${lastTag}${scratchBtn}${focusJumpBtn}${favBtn}${chevEl}</div>` +
     `</div>` +
     `<div class="stem stem-preview">${ii(tex(smartCut(r.stem, 200)))}</div>` +
     `<div class="stem stem-full">${ii(tex(r.stem).replace(/\n/g, '<br>'))}</div>` +
@@ -5576,13 +6214,23 @@ function bindCard(card) {
   const qhead = card.querySelector('.qhead');
   if (qhead) {
     qhead.onclick = e => {
-      if (e.target.closest('img') || e.target.closest('.favg') || e.target.closest('.t3-tag') || e.target.closest('.focus-jump-btn')) return;
+      if (e.target.closest('img') || e.target.closest('.favg') || e.target.closest('.t3-tag') || e.target.closest('.focus-jump-btn') || e.target.closest('.scratch-btn')) return;
       const sel = window.getSelection ? window.getSelection().toString() : '';
       if (sel) return;
       if (!card.classList.contains('focus-card')) {
         setCardOpen(card);
         setKbFocus(card);
       }
+    };
+  }
+
+  const scratchBtn = card.querySelector('.scratch-btn');
+  if (scratchBtn) {
+    scratchBtn.onclick = e => {
+      e.stopPropagation();
+      if (e.detail > 0) scratchBtn.blur();
+      setKbFocus(card);
+      openScratch(qid, formatDraftLabel(r, card.dataset.idx));
     };
   }
 
@@ -6026,6 +6674,7 @@ function renderFocusView(rows) {
   const mat = r.mid ? MATS[r.mid] : null;
   const hasMat = Boolean(mat && (mat.w || mat.g));
   const isMaskedActive = !state.practice && state.focusMasked && !state.focusRevealed.has(r.qid);
+  const curHasDraft = hasDraft(r.qid);
 
   const deckBar =
     `<div class="focus-deck-bar">` +
@@ -6036,6 +6685,7 @@ function renderFocusView(rows) {
         `<button id="focusNextBtn" class="deck-btn" type="button"${state.focusIdx >= rows.length - 1 ? ' disabled' : ''}><span>下一题</span>${svgIco('arrowRight', 'ico ico-sm')}</button>` +
       `</div>` +
       `<div class="focus-deck-right">` +
+        `<button id="focusScratchBtn" class="deck-btn${curHasDraft ? ' has-draft' : ''}" type="button" title="打开本题草稿纸（快捷键 S）">${svgIco('edit', 'ico ico-sm')}<span>草稿纸</span></button>` +
         (!state.practice
           ? `<button id="focusMaskBtn" class="deck-btn${state.focusMasked ? ' on' : ''}" type="button" aria-pressed="${state.focusMasked ? 'true' : 'false'}">${svgIco(state.focusMasked ? 'eyeOff' : 'eye', 'ico ico-sm')}<span>${state.focusMasked ? '已遮挡解析' : '遮挡解析'}</span></button>`
           : '') +
@@ -6044,11 +6694,12 @@ function renderFocusView(rows) {
     `</div>`;
 
   const mobileDock =
-    `<div class="focus-mobile-dock" role="toolbar" aria-label="专注模式快捷翻题">` +
+    `<div class="focus-mobile-dock${!state.practice ? ' has-mask' : ''}" role="toolbar" aria-label="专注模式快捷翻题">` +
       `<button id="focusDockPrev" class="deck-btn" type="button"${state.focusIdx <= 0 ? ' disabled' : ''}>${svgIco('arrowLeft', 'ico ico-sm')}<span>上一题</span></button>` +
       (!state.practice
-        ? `<button id="focusDockMask" class="deck-btn${state.focusMasked ? ' on' : ''}" type="button" aria-pressed="${state.focusMasked ? 'true' : 'false'}">${svgIco(isMaskedActive ? 'eye' : (state.focusMasked ? 'eyeOff' : 'eye'), 'ico ico-sm')}<span>${isMaskedActive ? '揭晓解析' : (state.focusMasked ? '已遮挡' : '遮挡')}</span></button>`
+        ? `<button id="focusDockMask" class="deck-btn${state.focusMasked ? ' on' : ''}" type="button" aria-pressed="${state.focusMasked ? 'true' : 'false'}">${svgIco(isMaskedActive ? 'eye' : (state.focusMasked ? 'eyeOff' : 'eye'), 'ico ico-sm')}<span>${isMaskedActive ? '揭晓' : (state.focusMasked ? '已遮挡' : '遮挡')}</span></button>`
         : '') +
+      `<button id="focusDockScratch" class="deck-btn${curHasDraft ? ' has-draft' : ''}" type="button" aria-label="打开本题草稿纸" title="打开本题草稿纸">${svgIco('edit', 'ico ico-sm')}<span>草稿</span></button>` +
       `<span class="focus-pos">${pos} / ${rows.length}</span>` +
       `<button id="focusDockNext" class="deck-btn deck-btn-primary" type="button"${state.focusIdx >= rows.length - 1 ? ' disabled' : ''}><span>下一题</span>${svgIco('arrowRight', 'ico ico-sm')}</button>` +
     `</div>`;
@@ -6057,6 +6708,24 @@ function renderFocusView(rows) {
 
   const card = $('list').querySelector('.qcard');
   if (card) bindCard(card);
+
+  if ($('focusScratchBtn')) {
+    $('focusScratchBtn').onclick = e => {
+      if (e.detail > 0) $('focusScratchBtn').blur();
+      openScratch(r.qid, formatDraftLabel(r, pos));
+    };
+  }
+  if ($('focusDockScratch')) {
+    $('focusDockScratch').onclick = e => {
+      if (e.detail > 0) $('focusDockScratch').blur();
+      openScratch(r.qid, formatDraftLabel(r, pos));
+    };
+  }
+  if (state.scratchOpen) {
+    syncScratchContextForFocus(r, pos);
+  } else {
+    syncDraftIndicators(r.qid);
+  }
 
   if ($('focusPrevBtn')) {
     $('focusPrevBtn').onclick = e => {
@@ -6186,6 +6855,7 @@ function renderList() {
     };
   }
   updatePStats();
+  syncDraftIndicators();
 }
 
 function scrollToContent() {
@@ -6939,13 +7609,638 @@ if ($('lightboxImg')) {
   }
 }
 
+// ---------- 全屏透明草稿纸（粉笔式覆层，按题独立保留当前会话草稿） ----------
+const SCRATCH_BG_ORDER = ['clear', 'tint', 'grid'];
+const SCRATCH_BG_LABELS = { clear: '透明', tint: '磨砂', grid: '方格' };
+const SCRATCH_COLORS = {
+  light: {
+    ink: '#111827',
+    blue: '#2563eb',
+    red: '#dc2626',
+    green: '#059669'
+  },
+  dark: {
+    ink: '#f1f5f9',
+    blue: '#60a5fa',
+    red: '#f87171',
+    green: '#34d399'
+  }
+};
+
+const scratchPref = {
+  tool: 'pen',
+  color: 'ink',
+  size: 3.4,
+  bg: 'clear',
+  dock: 'bottom',
+  penOnly: false
+};
+try {
+  const sp = JSON.parse(localStorage.getItem(DKEY) || 'null');
+  if (sp && typeof sp === 'object') {
+    if (sp.color && SCRATCH_COLORS.light[sp.color]) scratchPref.color = sp.color;
+    if (typeof sp.size === 'number' && sp.size >= 1 && sp.size <= 12) scratchPref.size = sp.size;
+    if (SCRATCH_BG_ORDER.includes(sp.bg)) scratchPref.bg = sp.bg;
+    if (sp.dock === 'top' || sp.dock === 'bottom') scratchPref.dock = sp.dock;
+    if (typeof sp.penOnly === 'boolean') scratchPref.penOnly = sp.penOnly;
+  }
+} catch (e) {}
+
+function saveScratchPref() {
+  try {
+    localStorage.setItem(DKEY, JSON.stringify({
+      color: scratchPref.color,
+      size: scratchPref.size,
+      bg: scratchPref.bg,
+      dock: scratchPref.dock,
+      penOnly: scratchPref.penOnly
+    }));
+  } catch (e) {}
+}
+
+function isScratchOpen() {
+  return Boolean(state.scratchOpen);
+}
+
+function isScratchBlocking() {
+  return Boolean(state.scratchOpen && !state.scratchPass);
+}
+
+function getDraftEntry(qid, create = false) {
+  const key = qid || '__global__';
+  let entry = state.drafts.get(key);
+  if (!entry && create) {
+    entry = { strokes: [], undo: [], redo: [] };
+    state.drafts.set(key, entry);
+  }
+  return entry || null;
+}
+
+function hasDraft(qid) {
+  if (!qid) return false;
+  const entry = state.drafts.get(qid);
+  return Boolean(entry && entry.strokes.length > 0);
+}
+
+function formatDraftLabel(r, idx) {
+  if (!r) return '自由草稿纸';
+  const parts = [];
+  if (idx) parts.push(`#${idx}`);
+  if (r.t2) parts.push(r.t2);
+  if (r.qid) parts.push(r.qid);
+  return parts.join(' · ') || '本题草稿';
+}
+
+function resolveCurrentScratchTarget() {
+  if (state.view === 'focus') {
+    const rows = getFilteredRows();
+    if (rows.length) {
+      const idx = Math.max(0, Math.min(rows.length - 1, state.focusIdx));
+      const r = rows[idx];
+      return { qid: r.qid, label: formatDraftLabel(r, idx + 1) };
+    }
+    if (state.focusQid) {
+      const r = DATA.find(x => x.qid === state.focusQid);
+      return { qid: state.focusQid, label: formatDraftLabel(r, state.focusIdx + 1) };
+    }
+  }
+  const cards = [...document.querySelectorAll('#list .qcard')];
+  if (cards.length) {
+    const vh = window.innerHeight || 800;
+    const anchorY = Math.min(vh * 0.38, 300);
+    const visibleCards = cards.filter(c => {
+      const rc = c.getBoundingClientRect();
+      return rc.bottom > 80 && rc.top < vh - 40;
+    });
+    const openVisible = visibleCards.filter(c => c.classList.contains('open'));
+    let chosen = null;
+    const pool = openVisible.length ? openVisible : visibleCards;
+    if (pool.length) {
+      chosen = pool.reduce((best, c) => {
+        const rc = c.getBoundingClientRect();
+        const dist = Math.abs(rc.top - anchorY);
+        return (!best || dist < best.dist) ? { el: c, dist } : best;
+      }, null).el;
+    }
+    if (!chosen && state.kbQid) {
+      chosen = cards.find(c => c.dataset.qid === state.kbQid) || null;
+    }
+    if (!chosen) chosen = cards[0];
+    if (chosen) {
+      const qid = chosen.dataset.qid;
+      const r = DATA.find(x => x.qid === qid);
+      return { qid, label: formatDraftLabel(r, chosen.dataset.idx) };
+    }
+  }
+  return { qid: '__global__', label: '自由草稿纸' };
+}
+
+function resolveScratchColor(colorKey) {
+  const dark = document.documentElement.dataset.theme === 'dark';
+  const pal = dark ? SCRATCH_COLORS.dark : SCRATCH_COLORS.light;
+  return pal[colorKey] || pal.ink;
+}
+
+const scratchOverlayEl = $('scratchOverlay');
+const scratchCanvasEl = $('scratchCanvas');
+const scratchCtx = scratchCanvasEl ? scratchCanvasEl.getContext('2d') : null;
+let scratchActiveStroke = null;
+let scratchActivePid = null;
+let scratchPenHintShown = false;
+
+function resizeScratchCanvas() {
+  if (!scratchCanvasEl || !scratchCtx) return;
+  const dpr = Math.min(window.devicePixelRatio || 1, 3);
+  const w = Math.max(1, Math.round(window.innerWidth));
+  const h = Math.max(1, Math.round(window.innerHeight));
+  scratchCanvasEl.width = Math.round(w * dpr);
+  scratchCanvasEl.height = Math.round(h * dpr);
+  scratchCanvasEl.style.width = w + 'px';
+  scratchCanvasEl.style.height = h + 'px';
+  scratchCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  redrawScratchCanvas();
+}
+
+function drawStrokeSegment(ctx, p0, p1, p2, width, isEraser, color) {
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = width;
+  if (isEraser) {
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.strokeStyle = '#000';
+  } else {
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.strokeStyle = color;
+  }
+  ctx.beginPath();
+  if (!p2) {
+    ctx.moveTo(p0[0], p0[1]);
+    ctx.lineTo(p1[0], p1[1]);
+  } else {
+    const mx1 = (p0[0] + p1[0]) * 0.5;
+    const my1 = (p0[1] + p1[1]) * 0.5;
+    const mx2 = (p1[0] + p2[0]) * 0.5;
+    const my2 = (p1[1] + p2[1]) * 0.5;
+    ctx.moveTo(mx1, my1);
+    ctx.quadraticCurveTo(p1[0], p1[1], mx2, my2);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function renderStroke(ctx, stroke) {
+  const pts = stroke && stroke.pts;
+  if (!pts || !pts.length) return;
+  const isEraser = stroke.mode === 'eraser';
+  const color = isEraser ? '#000' : resolveScratchColor(stroke.color);
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  if (isEraser) {
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.strokeStyle = '#000';
+    ctx.fillStyle = '#000';
+  } else {
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+  }
+
+  if (pts.length === 1) {
+    const w = pts[0][2] || stroke.width;
+    ctx.beginPath();
+    ctx.arc(pts[0][0], pts[0][1], Math.max(1, w * 0.5), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    return;
+  }
+
+  if (stroke.dynamic && !isEraser) {
+    if (pts.length === 2) {
+      ctx.lineWidth = (pts[0][2] + pts[1][2]) * 0.5;
+      ctx.beginPath();
+      ctx.moveTo(pts[0][0], pts[0][1]);
+      ctx.lineTo(pts[1][0], pts[1][1]);
+      ctx.stroke();
+    } else {
+      ctx.lineWidth = (pts[0][2] + pts[1][2]) * 0.5;
+      ctx.beginPath();
+      ctx.moveTo(pts[0][0], pts[0][1]);
+      ctx.lineTo((pts[0][0] + pts[1][0]) * 0.5, (pts[0][1] + pts[1][1]) * 0.5);
+      ctx.stroke();
+      for (let i = 1; i < pts.length - 1; i++) {
+        const p0 = pts[i - 1], p1 = pts[i], p2 = pts[i + 1];
+        const mx1 = (p0[0] + p1[0]) * 0.5;
+        const my1 = (p0[1] + p1[1]) * 0.5;
+        const mx2 = (p1[0] + p2[0]) * 0.5;
+        const my2 = (p1[1] + p2[1]) * 0.5;
+        ctx.lineWidth = p1[2] || stroke.width;
+        ctx.beginPath();
+        ctx.moveTo(mx1, my1);
+        ctx.quadraticCurveTo(p1[0], p1[1], mx2, my2);
+        ctx.stroke();
+      }
+      const last = pts[pts.length - 1];
+      const prev = pts[pts.length - 2];
+      ctx.lineWidth = last[2] || stroke.width;
+      ctx.beginPath();
+      ctx.moveTo((prev[0] + last[0]) * 0.5, (prev[1] + last[1]) * 0.5);
+      ctx.lineTo(last[0], last[1]);
+      ctx.stroke();
+    }
+    ctx.restore();
+    return;
+  }
+
+  ctx.lineWidth = stroke.width;
+  ctx.beginPath();
+  ctx.moveTo(pts[0][0], pts[0][1]);
+  if (pts.length === 2) {
+    ctx.lineTo(pts[1][0], pts[1][1]);
+  } else {
+    for (let i = 1; i < pts.length - 1; i++) {
+      const mx = (pts[i][0] + pts[i + 1][0]) * 0.5;
+      const my = (pts[i][1] + pts[i + 1][1]) * 0.5;
+      ctx.quadraticCurveTo(pts[i][0], pts[i][1], mx, my);
+    }
+    const last = pts[pts.length - 1];
+    ctx.lineTo(last[0], last[1]);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function redrawScratchCanvas() {
+  if (!scratchCanvasEl || !scratchCtx) return;
+  const w = scratchCanvasEl.width;
+  const h = scratchCanvasEl.height;
+  scratchCtx.save();
+  scratchCtx.setTransform(1, 0, 0, 1, 0, 0);
+  scratchCtx.clearRect(0, 0, w, h);
+  scratchCtx.restore();
+  const entry = getDraftEntry(state.scratchQid, false);
+  if (entry && entry.strokes.length) {
+    for (let i = 0; i < entry.strokes.length; i++) {
+      renderStroke(scratchCtx, entry.strokes[i]);
+    }
+  }
+  if (scratchActiveStroke) {
+    renderStroke(scratchCtx, scratchActiveStroke);
+  }
+}
+
+function syncDraftIndicators(changedQid) {
+  if (changedQid) {
+    const active = hasDraft(changedQid);
+    document.querySelectorAll(`.scratch-btn[data-scratch-qid="${changedQid}"]`).forEach(btn => {
+      btn.classList.toggle('has-draft', active);
+      const label = active ? '打开本题草稿纸（已有笔迹）' : '打开本题草稿纸';
+      btn.setAttribute('aria-label', label);
+      btn.title = label;
+    });
+  }
+  const focusHas = state.view === 'focus' && hasDraft(state.focusQid);
+  const fBtn = $('focusScratchBtn');
+  if (fBtn) fBtn.classList.toggle('has-draft', focusHas);
+  const dBtn = $('focusDockScratch');
+  if (dBtn) dBtn.classList.toggle('has-draft', focusHas);
+
+  const fab = $('scratchFab');
+  if (fab) {
+    let fabHas = false;
+    if (state.view === 'focus') {
+      fabHas = focusHas;
+    } else {
+      const target = resolveCurrentScratchTarget();
+      fabHas = hasDraft(target.qid);
+    }
+    fab.classList.toggle('has-draft', fabHas);
+  }
+}
+
+function syncScratchToolbarUI() {
+  if (!scratchOverlayEl) return;
+  scratchOverlayEl.classList.remove('bg-clear', 'bg-tint', 'bg-grid', 'dock-top', 'dock-bottom', 'tool-eraser', 'is-passthrough');
+  scratchOverlayEl.classList.add(`bg-${scratchPref.bg}`, `dock-${scratchPref.dock}`);
+  document.body.classList.toggle('scratch-dock-top', state.scratchOpen && scratchPref.dock === 'top');
+  if (scratchPref.tool === 'eraser') scratchOverlayEl.classList.add('tool-eraser');
+  if (state.scratchPass) scratchOverlayEl.classList.add('is-passthrough');
+
+  const penBtn = $('scratchPenBtn');
+  const eraBtn = $('scratchEraserBtn');
+  if (penBtn) {
+    penBtn.classList.toggle('on', scratchPref.tool === 'pen');
+    penBtn.setAttribute('aria-pressed', scratchPref.tool === 'pen' ? 'true' : 'false');
+  }
+  if (eraBtn) {
+    eraBtn.classList.toggle('on', scratchPref.tool === 'eraser');
+    eraBtn.setAttribute('aria-pressed', scratchPref.tool === 'eraser' ? 'true' : 'false');
+  }
+
+  document.querySelectorAll('#scratchToolbar .scratch-swatch').forEach(btn => {
+    const on = btn.dataset.scolor === scratchPref.color;
+    btn.classList.toggle('on', on);
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  document.querySelectorAll('#scratchToolbar .scratch-size-btn').forEach(btn => {
+    const on = Math.abs(Number(btn.dataset.ssize) - scratchPref.size) < 0.05;
+    btn.classList.toggle('on', on);
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+
+  const bgLbl = $('scratchBgLabel');
+  if (bgLbl) bgLbl.textContent = SCRATCH_BG_LABELS[scratchPref.bg] || '透明';
+
+  const penOnlyBtn = $('scratchPenOnlyBtn');
+  if (penOnlyBtn) {
+    penOnlyBtn.classList.toggle('on', scratchPref.penOnly);
+    penOnlyBtn.setAttribute('aria-pressed', scratchPref.penOnly ? 'true' : 'false');
+  }
+
+  const passPill = $('scratchPassPill');
+  if (passPill) passPill.hidden = !state.scratchPass;
+
+  const entry = getDraftEntry(state.scratchQid, false);
+  const strokeCount = entry ? entry.strokes.length : 0;
+  const canUndo = Boolean(entry && entry.undo.length > 0);
+  const canRedo = Boolean(entry && entry.redo.length > 0);
+  if ($('scratchUndoBtn')) $('scratchUndoBtn').disabled = !canUndo;
+  if ($('scratchRedoBtn')) $('scratchRedoBtn').disabled = !canRedo;
+  if ($('scratchClearBtn')) $('scratchClearBtn').disabled = strokeCount === 0;
+
+  const qLbl = $('scratchQLabel');
+  if (qLbl) {
+    qLbl.textContent = state.scratchLabel ? `草稿 · ${state.scratchLabel}` : '草稿纸';
+  }
+}
+
+function openScratch(qid, label) {
+  if (!scratchOverlayEl) return;
+  const target = qid ? { qid, label: label || formatDraftLabel(DATA.find(x => x.qid === qid), null) } : resolveCurrentScratchTarget();
+  state.scratchQid = target.qid;
+  state.scratchLabel = target.label;
+  state.scratchOpen = true;
+  state.scratchPass = false;
+  scratchPenHintShown = false;
+  scratchOverlayEl.hidden = false;
+  document.body.classList.add('scratch-open');
+  syncScratchToolbarUI();
+  resizeScratchCanvas();
+  syncBodyOverlayState();
+}
+
+function closeScratch() {
+  if (!scratchOverlayEl || !state.scratchOpen) return;
+  scratchActiveStroke = null;
+  scratchActivePid = null;
+  state.scratchOpen = false;
+  state.scratchPass = false;
+  scratchOverlayEl.hidden = true;
+  document.body.classList.remove('scratch-open', 'scratch-dock-top');
+  syncBodyOverlayState();
+  syncDraftIndicators(state.scratchQid);
+}
+
+function setScratchPass(pass) {
+  if (!state.scratchOpen) return;
+  state.scratchPass = Boolean(pass);
+  scratchActiveStroke = null;
+  scratchActivePid = null;
+  syncScratchToolbarUI();
+  syncBodyOverlayState();
+  if (state.scratchPass) {
+    toast('已开启穿透：可边看笔迹边滚屏与点选答案', 2000);
+  }
+}
+
+function syncScratchContextForFocus(r, pos) {
+  if (!state.scratchOpen || !r) return;
+  if (state.scratchQid === r.qid) return;
+  scratchActiveStroke = null;
+  scratchActivePid = null;
+  state.scratchQid = r.qid;
+  state.scratchLabel = formatDraftLabel(r, pos);
+  syncScratchToolbarUI();
+  redrawScratchCanvas();
+  syncDraftIndicators(r.qid);
+}
+
+function scratchUndo() {
+  const entry = getDraftEntry(state.scratchQid, false);
+  if (!entry || !entry.undo.length) return;
+  const cmd = entry.undo.pop();
+  if (cmd.type === 'add') {
+    entry.strokes.pop();
+    entry.redo.push(cmd);
+  } else if (cmd.type === 'clear') {
+    entry.strokes = cmd.prev.slice();
+    entry.redo.push(cmd);
+  }
+  redrawScratchCanvas();
+  syncScratchToolbarUI();
+  syncDraftIndicators(state.scratchQid);
+}
+
+function scratchRedo() {
+  const entry = getDraftEntry(state.scratchQid, false);
+  if (!entry || !entry.redo.length) return;
+  const cmd = entry.redo.pop();
+  if (cmd.type === 'add') {
+    entry.strokes.push(cmd.stroke);
+    entry.undo.push(cmd);
+  } else if (cmd.type === 'clear') {
+    entry.strokes = [];
+    entry.undo.push(cmd);
+  }
+  redrawScratchCanvas();
+  syncScratchToolbarUI();
+  syncDraftIndicators(state.scratchQid);
+}
+
+function scratchClear() {
+  const entry = getDraftEntry(state.scratchQid, false);
+  if (!entry || !entry.strokes.length) return;
+  entry.undo.push({ type: 'clear', prev: entry.strokes.slice() });
+  if (entry.undo.length > 120) entry.undo.shift();
+  entry.redo = [];
+  entry.strokes = [];
+  redrawScratchCanvas();
+  syncScratchToolbarUI();
+  syncDraftIndicators(state.scratchQid);
+  toast('已清屏（点撤销可恢复）', 1800);
+}
+
+function cycleScratchBg() {
+  const idx = SCRATCH_BG_ORDER.indexOf(scratchPref.bg);
+  scratchPref.bg = SCRATCH_BG_ORDER[(idx + 1) % SCRATCH_BG_ORDER.length];
+  saveScratchPref();
+  syncScratchToolbarUI();
+  toast(`草稿底纹：${SCRATCH_BG_LABELS[scratchPref.bg]}`, 1500);
+}
+
+if (scratchCanvasEl && scratchCtx) {
+  const calcStrokeWidth = (e, baseWidth, isEraser) => {
+    if (isEraser) return Math.max(18, Math.min(36, baseWidth * 5));
+    if (e.pointerType === 'pen' && typeof e.pressure === 'number' && e.pressure > 0 && Math.abs(e.pressure - 0.5) > 0.01) {
+      const factor = 0.65 + Math.min(1, e.pressure) * 0.8;
+      return Math.max(1.2, baseWidth * factor);
+    }
+    return baseWidth;
+  };
+
+  const getCanvasPoint = (e, baseWidth, isEraser) => {
+    const rect = scratchCanvasEl.getBoundingClientRect();
+    return [e.clientX - rect.left, e.clientY - rect.top, calcStrokeWidth(e, baseWidth, isEraser)];
+  };
+
+  scratchCanvasEl.addEventListener('pointerdown', e => {
+    if (!state.scratchOpen || state.scratchPass) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (scratchPref.penOnly && e.pointerType === 'touch') {
+      if (!scratchPenHintShown) {
+        scratchPenHintShown = true;
+        toast('当前为「仅笔」模式，手指不落笔；需滚屏请点「穿透」', 2200);
+      }
+      return;
+    }
+    if (scratchActivePid !== null && scratchActivePid !== e.pointerId) return;
+    e.preventDefault();
+    try { scratchCanvasEl.setPointerCapture(e.pointerId); } catch (err) {}
+
+    const penTailEraser = e.pointerType === 'pen' && (e.button === 5 || (e.buttons & 32) !== 0);
+    const isEraser = scratchPref.tool === 'eraser' || penTailEraser;
+    const baseWidth = isEraser ? Math.max(18, Math.min(36, scratchPref.size * 5)) : scratchPref.size;
+    const dynamic = !isEraser && e.pointerType === 'pen';
+    const pt = getCanvasPoint(e, scratchPref.size, isEraser);
+
+    scratchActivePid = e.pointerId;
+    scratchActiveStroke = {
+      mode: isEraser ? 'eraser' : 'pen',
+      color: scratchPref.color,
+      width: baseWidth,
+      dynamic,
+      pts: [pt]
+    };
+    renderStroke(scratchCtx, scratchActiveStroke);
+  });
+
+  scratchCanvasEl.addEventListener('pointermove', e => {
+    if (!scratchActiveStroke || e.pointerId !== scratchActivePid) return;
+    e.preventDefault();
+    const isEraser = scratchActiveStroke.mode === 'eraser';
+    const color = isEraser ? '#000' : resolveScratchColor(scratchActiveStroke.color);
+    const events = typeof e.getCoalescedEvents === 'function' ? e.getCoalescedEvents() : [e];
+    const list = events && events.length ? events : [e];
+    const pts = scratchActiveStroke.pts;
+    for (let i = 0; i < list.length; i++) {
+      const pt = getCanvasPoint(list[i], scratchPref.size, isEraser);
+      const last = pts[pts.length - 1];
+      const dx = pt[0] - last[0];
+      const dy = pt[1] - last[1];
+      if (dx * dx + dy * dy < 1.4) continue;
+      pts.push(pt);
+      const n = pts.length;
+      const segW = scratchActiveStroke.dynamic && !isEraser ? pt[2] : scratchActiveStroke.width;
+      if (n === 2) {
+        drawStrokeSegment(scratchCtx, pts[0], pts[1], null, segW, isEraser, color);
+      } else if (n >= 3) {
+        drawStrokeSegment(scratchCtx, pts[n - 3], pts[n - 2], pts[n - 1], segW, isEraser, color);
+      }
+    }
+  });
+
+  const finishScratchStroke = e => {
+    if (!scratchActiveStroke || e.pointerId !== scratchActivePid) return;
+    try { scratchCanvasEl.releasePointerCapture(e.pointerId); } catch (err) {}
+    const finished = scratchActiveStroke;
+    scratchActiveStroke = null;
+    scratchActivePid = null;
+    const entry = getDraftEntry(state.scratchQid, true);
+    entry.strokes.push(finished);
+    entry.undo.push({ type: 'add', stroke: finished });
+    if (entry.undo.length > 120) entry.undo.shift();
+    entry.redo = [];
+    redrawScratchCanvas();
+    syncScratchToolbarUI();
+    syncDraftIndicators(state.scratchQid);
+  };
+
+  scratchCanvasEl.addEventListener('pointerup', finishScratchStroke);
+  scratchCanvasEl.addEventListener('pointercancel', finishScratchStroke);
+}
+
+if ($('scratchFab')) {
+  $('scratchFab').onclick = e => {
+    if (e.detail > 0) $('scratchFab').blur();
+    openScratch();
+  };
+}
+if ($('scratchPenBtn')) {
+  $('scratchPenBtn').onclick = () => {
+    scratchPref.tool = 'pen';
+    syncScratchToolbarUI();
+  };
+}
+if ($('scratchEraserBtn')) {
+  $('scratchEraserBtn').onclick = () => {
+    scratchPref.tool = 'eraser';
+    syncScratchToolbarUI();
+  };
+}
+document.querySelectorAll('#scratchToolbar .scratch-swatch').forEach(btn => {
+  btn.onclick = () => {
+    const c = btn.dataset.scolor;
+    if (c && SCRATCH_COLORS.light[c]) {
+      scratchPref.color = c;
+      scratchPref.tool = 'pen';
+      saveScratchPref();
+      syncScratchToolbarUI();
+    }
+  };
+});
+document.querySelectorAll('#scratchToolbar .scratch-size-btn').forEach(btn => {
+  btn.onclick = () => {
+    const s = Number(btn.dataset.ssize);
+    if (s > 0) {
+      scratchPref.size = s;
+      saveScratchPref();
+      syncScratchToolbarUI();
+    }
+  };
+});
+if ($('scratchBgBtn')) $('scratchBgBtn').onclick = cycleScratchBg;
+if ($('scratchPenOnlyBtn')) {
+  $('scratchPenOnlyBtn').onclick = () => {
+    scratchPref.penOnly = !scratchPref.penOnly;
+    scratchPenHintShown = false;
+    saveScratchPref();
+    syncScratchToolbarUI();
+    toast(scratchPref.penOnly ? '已开启仅笔书写（忽略手指误触）' : '已恢复手指/鼠标/触控笔均可书写', 2000);
+  };
+}
+if ($('scratchPassBtn')) $('scratchPassBtn').onclick = () => setScratchPass(true);
+if ($('scratchResumeBtn')) $('scratchResumeBtn').onclick = () => setScratchPass(false);
+if ($('scratchPassCloseBtn')) $('scratchPassCloseBtn').onclick = closeScratch;
+if ($('scratchUndoBtn')) $('scratchUndoBtn').onclick = scratchUndo;
+if ($('scratchRedoBtn')) $('scratchRedoBtn').onclick = scratchRedo;
+if ($('scratchClearBtn')) $('scratchClearBtn').onclick = scratchClear;
+if ($('scratchCloseBtn')) $('scratchCloseBtn').onclick = closeScratch;
+if ($('scratchPosBtn')) {
+  $('scratchPosBtn').onclick = () => {
+    scratchPref.dock = scratchPref.dock === 'bottom' ? 'top' : 'bottom';
+    saveScratchPref();
+    syncScratchToolbarUI();
+  };
+}
+
 // ---------- 触屏滑屏手势（专注舱切题 & 移动端左滑关闭抽屉） ----------
 {
   const listEl = $('list');
   if (listEl) {
     let fTouch = null;
     listEl.addEventListener('touchstart', e => {
-      if (state.view !== 'focus' || isModalOpen() || e.touches.length !== 1) {
+      if (state.view !== 'focus' || isModalOpen() || isScratchBlocking() || e.touches.length !== 1) {
         fTouch = null;
         return;
       }
@@ -6966,7 +8261,7 @@ if ($('lightboxImg')) {
     }, { passive: true });
 
     listEl.addEventListener('touchend', e => {
-      if (!fTouch || !fTouch.valid || state.view !== 'focus' || isModalOpen() || e.changedTouches.length !== 1) {
+      if (!fTouch || !fTouch.valid || state.view !== 'focus' || isModalOpen() || isScratchBlocking() || e.changedTouches.length !== 1) {
         fTouch = null;
         return;
       }
@@ -7017,10 +8312,18 @@ if ($('lightboxImg')) {
 // ---------- 回到顶部 & 视口自适应 ----------
 const toTopBtn = $('toTopBtn');
 if (toTopBtn) {
+  let fabScrollRaf = 0;
   const onScroll = () => {
     const show = window.scrollY > 500;
     toTopBtn.hidden = !show;
     toTopBtn.classList.toggle('show', show);
+    document.body.classList.toggle('has-to-top', show);
+    if (!fabScrollRaf && state.view !== 'focus' && state.drafts.size > 0) {
+      fabScrollRaf = requestAnimationFrame(() => {
+        fabScrollRaf = 0;
+        syncDraftIndicators();
+      });
+    }
   };
   window.addEventListener('scroll', onScroll, { passive: true });
   toTopBtn.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -7036,6 +8339,7 @@ window.addEventListener('resize', () => {
     state.navOpen = !isMobile;
   }
   updateNavVisibility();
+  if (state.scratchOpen) resizeScratchCanvas();
 }, { passive: true });
 
 // ---------- 桌面键盘快捷键（流式工作台 & 单题专注舱） ----------
@@ -7055,6 +8359,7 @@ document.addEventListener('keydown', e => {
     if (isLightboxOpen()) { closeLightbox(); return; }
     if ($('syncModal') && !$('syncModal').hidden) { closeSyncModal(); return; }
     if ($('helpModal') && !$('helpModal').hidden) { closeHelpModal(); return; }
+    if (isScratchOpen()) { closeScratch(); return; }
     if ($('toolsMenu') && !$('toolsMenu').hidden) {
       closeToolsMenu();
       return;
@@ -7077,11 +8382,41 @@ document.addEventListener('keydown', e => {
   }
 
   if (isModalOpen()) return;
+
+  const key = e.key.toLowerCase();
+  if (isScratchBlocking()) {
+    if ((e.ctrlKey || e.metaKey) && !e.altKey) {
+      if (key === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) scratchRedo();
+        else scratchUndo();
+      } else if (key === 'y') {
+        e.preventDefault();
+        scratchRedo();
+      }
+      return;
+    }
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (key === 's') { e.preventDefault(); closeScratch(); return; }
+    if (key === 'p' || key === 'b') { e.preventDefault(); scratchPref.tool = 'pen'; syncScratchToolbarUI(); return; }
+    if (key === 'e') { e.preventDefault(); scratchPref.tool = 'eraser'; syncScratchToolbarUI(); return; }
+    if (key === 'g') { e.preventDefault(); cycleScratchBg(); return; }
+    if (key === 'c') { e.preventDefault(); scratchClear(); return; }
+    return;
+  }
+
   if (e.ctrlKey || e.metaKey || e.altKey) return;
 
   const ae = document.activeElement;
   const tag = ae && ae.tagName ? ae.tagName.toLowerCase() : '';
   if (tag === 'input' || tag === 'textarea' || tag === 'select' || (ae && ae.isContentEditable)) return;
+
+  if (key === 's') {
+    e.preventDefault();
+    if (state.scratchOpen && state.scratchPass) setScratchPass(false);
+    else openScratch();
+    return;
+  }
 
   if (e.key === '/') {
     const qEl = $('q');
@@ -7093,7 +8428,6 @@ document.addEventListener('keydown', e => {
     return;
   }
 
-  const key = e.key.toLowerCase();
   const optMap = { '1': 'A', '2': 'B', '3': 'C', '4': 'D', 'a': 'A', 'b': 'B', 'c': 'C', 'd': 'D' };
 
   if (state.view === 'focus') {
