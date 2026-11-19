@@ -196,9 +196,14 @@ button.focus-jump-btn:active:not(:disabled) {
   background: var(--accent-soft);
 }
 
-.popt:not(.locked):active {
+.popt:not(.locked):not(.excluded):active {
   background: var(--accent-soft);
   border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.popt.excluded:not(.locked):active {
+  background: var(--seg-bg);
+  border-color: var(--line);
 }
 
 :focus-visible {
@@ -1829,6 +1834,13 @@ article.qcard.open .qchev {
   gap: 8px;
 }
 
+.parea-tip {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
 .popt-list,
 .opts-full {
   display: flex;
@@ -1852,17 +1864,40 @@ article.qcard.open .qchev {
   font-size: 14px;
   line-height: 1.65;
   color: var(--ink);
-  transition: border-color .14s ease, background .14s ease, box-shadow .14s ease, transform .14s ease;
+  transition: border-color .14s ease, background .14s ease, box-shadow .14s ease, transform .14s ease, opacity .14s ease, color .14s ease;
 }
 
 .popt {
   cursor: pointer;
 }
 
+.popt:not(.locked) {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.popt:not(.locked) img {
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
+.popt.pressing:not(.locked) {
+  transform: scale(0.985);
+  border-color: color-mix(in srgb, var(--muted) 42%, transparent);
+  background: color-mix(in srgb, var(--seg-bg) 82%, transparent);
+}
+
 @media (hover: hover) and (pointer: fine) {
-  .popt:not(.locked):hover {
+  .popt:not(.locked):not(.excluded):hover {
     border-color: color-mix(in srgb, var(--accent) 35%, transparent);
     background: var(--accent-soft);
+  }
+
+  .popt.excluded:not(.locked):hover {
+    border-color: var(--line);
+    background: var(--seg-bg);
+    opacity: .84;
   }
 }
 
@@ -1870,6 +1905,64 @@ article.qcard.open .qchev {
   border-color: color-mix(in srgb, var(--accent) 55%, transparent);
   background: var(--accent-soft);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.popt.excluded {
+  border-color: var(--line-soft);
+  background: color-mix(in srgb, var(--seg-bg) 78%, transparent);
+  color: var(--muted);
+  opacity: .72;
+}
+
+html[data-theme="dark"] .popt.excluded {
+  background: color-mix(in srgb, var(--card) 55%, var(--bg));
+  border-color: var(--line-soft);
+  opacity: .64;
+}
+
+.popt.excluded .opt-key {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.popt.excluded .opt-val {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+  text-decoration-color: color-mix(in srgb, var(--muted) 90%, transparent);
+}
+
+.popt.excluded .opt-val img {
+  opacity: .42;
+  filter: grayscale(1);
+}
+
+.popt.excluded .opt-val:has(> img:only-child) {
+  position: relative;
+}
+
+.popt.excluded .opt-val:has(> img:only-child)::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1.5px;
+  background: color-mix(in srgb, var(--muted) 88%, transparent);
+  pointer-events: none;
+}
+
+.opt-excluded-tag {
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--muted) 14%, transparent);
+  color: var(--muted);
+  white-space: nowrap;
 }
 
 .popt.locked {
@@ -4000,6 +4093,7 @@ html[data-theme="dark"] #toast {
       <div class="bento-card">
         <div class="bento-kv"><b>单题专注舱：</b>点击顶部「专注」或任意题卡右上角专注图标进入单题沉浸阅读，带共享材料的资料题在宽屏下自动左右分栏对照。</div>
         <div class="bento-kv"><b>错题重刷：</b>练习模式下答错或直接看答案会累计「曾错 N 次」，刷新后选项绝不锁死，可随时反复重刷。</div>
+        <div class="bento-kv"><b>选项排除：</b>练习模式下长按某个选项可将其标灰并加删除线排除；短按或再次长按已排除的选项即可取消排除。</div>
         <div class="bento-kv"><b>离线缓存：</b>点击右上角更多菜单中的「缓存题图」，即可离线查看全部题图与图形推理。</div>
         <div class="bento-kv"><b>触屏与手势：</b>专注舱支持左右滑动切题与移动端底部快捷翻题；题图灯箱支持双指或滚轮缩放、拖拽平移与左右滑切图。</div>
       </div>
@@ -4140,6 +4234,7 @@ const state = {
   focusMasked: false,
   focusRevealed: new Set(),
   answers: {}, // 仅存当前会话，刷新绝不锁死题目
+  excluded: {}, // 仅存当前会话，练习模式排除选项 Map<qid, Set<key>>
   onlyFav: false,
   onlyWrong: false,
   limit: 40,
@@ -4227,6 +4322,7 @@ function mergeProgObjects(target, incoming) {
       FAVS.clear();
       target.favs = [];
       state.answers = {};
+      state.excluded = {};
     }
     if (inTs <= inCleared) {
       if (inTs > (Number(target.ts) || 0)) target.ts = inTs;
@@ -5252,13 +5348,66 @@ function focusCardHtml(r, pos, isMaskedActive) {
 }
 
 // ---------- 练习模式 ----------
+const OPT_LONG_PRESS_MS = 450;
+const OPT_MOVE_TOLERANCE = 10;
+let optSuppressClickUntil = 0;
+
+function getExcludedSet(qid, create = false) {
+  if (!state.excluded[qid]) {
+    if (!create) return null;
+    state.excluded[qid] = new Set();
+  }
+  return state.excluded[qid];
+}
+
+function isOptExcluded(qid, k) {
+  const set = state.excluded[qid];
+  return Boolean(set && set.has(k));
+}
+
+function syncOptExcludedUI(el, excluded) {
+  el.classList.toggle('excluded', excluded);
+  if (excluded) el.dataset.excluded = '1';
+  else el.removeAttribute('data-excluded');
+  el.title = excluded ? '已排除 · 点击或长按取消排除' : '点击选择 · 长按排除';
+  const markEl = el.querySelector('.opt-mark');
+  if (markEl && !el.classList.contains('locked')) {
+    markEl.innerHTML = excluded ? '<span class="opt-excluded-tag">已排除</span>' : '';
+  }
+}
+
+function setOptExcluded(card, qid, k, nextExcluded) {
+  if (state.answers[qid]) return false;
+  const set = getExcludedSet(qid, nextExcluded);
+  const prev = Boolean(set && set.has(k));
+  if (prev === nextExcluded) return false;
+  if (nextExcluded) {
+    set.add(k);
+  } else if (set) {
+    set.delete(k);
+    if (!set.size) delete state.excluded[qid];
+  }
+  const el = card ? card.querySelector(`.popt[data-k="${k}"]`) : null;
+  if (el) {
+    if (nextExcluded && el.classList.contains('sel')) {
+      el.classList.remove('sel');
+      const sub = card.querySelector('.psubmit');
+      if (sub) sub.disabled = !card.querySelectorAll('.popt.sel').length;
+    }
+    syncOptExcludedUI(el, nextExcluded);
+  }
+  return true;
+}
+
 function parea(r, picked) {
   const isMulti = r.ans.length > 1;
   const ansSet = new Set(r.ans.split(''));
+  const exSet = picked ? null : state.excluded[r.qid];
   let h = `<div class="sec parea">` +
-    `<div class="parea-head"><span>${isMulti ? '作答 · 多选题（先点选再提交）' : '作答 · 点击选项'}</span></div>` +
+    `<div class="parea-head"><span>${isMulti ? '作答 · 多选题（先点选再提交）' : '作答 · 点击选项'}</span>${picked ? '' : '<span class="parea-tip">长按选项可排除</span>'}</div>` +
     `<div class="popt-list">`;
   for (const [k, v] of Object.entries(r.opts || {})) {
+    const excluded = Boolean(exSet && exSet.has(k));
     let cls = 'popt';
     let mark = '';
     if (picked) {
@@ -5272,8 +5421,13 @@ function parea(r, picked) {
       } else {
         cls += ' dim';
       }
+    } else if (excluded) {
+      cls += ' excluded';
+      mark = '<span class="opt-excluded-tag">已排除</span>';
     }
-    h += `<div class="${cls}" data-qid="${r.qid}" data-k="${k}">` +
+    const titleAttr = picked ? '' : (excluded ? ' title="已排除 · 点击或长按取消排除"' : ' title="点击选择 · 长按排除"');
+    const exAttr = excluded ? ' data-excluded="1"' : '';
+    h += `<div class="${cls}" data-qid="${r.qid}" data-k="${k}"${exAttr}${titleAttr}>` +
       `<span class="opt-key">${k}</span>` +
       `<span class="opt-val">${ii(tex(v))}</span>` +
       `<span class="opt-mark">${mark}</span>` +
@@ -5475,6 +5629,15 @@ function bindCard(card) {
 
   card.querySelectorAll('img').forEach(el => {
     el.onclick = e => {
+      if (Date.now() < optSuppressClickUntil) {
+        optSuppressClickUntil = 0;
+        const popt = el.closest('.popt');
+        if (popt) popt._suppressClickUntil = 0;
+        e.stopPropagation();
+        e.preventDefault();
+        return;
+      }
+      if (el.closest('.popt.excluded:not(.locked)')) return;
       e.stopPropagation();
       openLightboxFromImg(el);
     };
@@ -5511,16 +5674,128 @@ function bindCard(card) {
 
   if (!state.practice || !r) return;
   card.querySelectorAll('.popt').forEach(el => {
-    el.onclick = e => {
-      if (e.target.closest('img')) return;
+    const k = el.dataset.k;
+    let pressTimer = null;
+    let visualTimer = null;
+    let activePid = null;
+    let startX = 0;
+    let startY = 0;
+    let longPressFired = false;
+    let lastPointerType = 'mouse';
+
+    const clearTimers = () => {
+      clearTimeout(pressTimer);
+      clearTimeout(visualTimer);
+      pressTimer = null;
+      visualTimer = null;
+      el.classList.remove('pressing');
+    };
+
+    const detachWin = () => {
+      window.removeEventListener('pointermove', onWinMove);
+      window.removeEventListener('pointerup', onWinEnd);
+      window.removeEventListener('pointercancel', onWinEnd);
+    };
+
+    const resetPress = () => {
+      clearTimers();
+      activePid = null;
+      detachWin();
+    };
+
+    const onWinMove = e => {
+      if (e.pointerId !== activePid || longPressFired) return;
+      if (Math.hypot(e.clientX - startX, e.clientY - startY) > OPT_MOVE_TOLERANCE) {
+        resetPress();
+      }
+    };
+
+    const onWinEnd = e => {
+      if (e.pointerId !== activePid) return;
+      const fired = longPressFired;
+      resetPress();
+      if (fired) {
+        const until = Date.now() + 360;
+        el._suppressClickUntil = until;
+        optSuppressClickUntil = until;
+        longPressFired = false;
+      }
+    };
+
+    el.addEventListener('pointerdown', e => {
       if (state.answers[qid]) return;
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      if (e.isPrimary === false) {
+        resetPress();
+        return;
+      }
+      resetPress();
+      lastPointerType = e.pointerType || 'mouse';
+      activePid = e.pointerId;
+      startX = e.clientX;
+      startY = e.clientY;
+      longPressFired = false;
+
+      visualTimer = setTimeout(() => {
+        if (activePid === e.pointerId && !state.answers[qid]) {
+          el.classList.add('pressing');
+        }
+      }, 90);
+
+      pressTimer = setTimeout(() => {
+        if (activePid !== e.pointerId || state.answers[qid]) return;
+        clearTimers();
+        longPressFired = true;
+        const until = Date.now() + 800;
+        el._suppressClickUntil = until;
+        optSuppressClickUntil = Math.max(optSuppressClickUntil, until);
+        if (!card.classList.contains('focus-card')) setKbFocus(card);
+        setOptExcluded(card, qid, k, !isOptExcluded(qid, k));
+        if (navigator.vibrate) {
+          try { navigator.vibrate(12); } catch (err) {}
+        }
+      }, OPT_LONG_PRESS_MS);
+
+      window.addEventListener('pointermove', onWinMove, { passive: true });
+      window.addEventListener('pointerup', onWinEnd, { passive: true });
+      window.addEventListener('pointercancel', onWinEnd, { passive: true });
+    });
+
+    el.addEventListener('pointerleave', e => {
+      if (e.pointerId === activePid && e.pointerType === 'mouse' && !longPressFired) {
+        resetPress();
+      }
+    });
+
+    el.addEventListener('contextmenu', e => {
+      if (!state.answers[qid] && (lastPointerType !== 'mouse' || longPressFired || Date.now() < (el._suppressClickUntil || 0))) {
+        e.preventDefault();
+      }
+    });
+
+    el.onclick = e => {
+      if (longPressFired || Date.now() < (el._suppressClickUntil || 0)) {
+        longPressFired = false;
+        el._suppressClickUntil = 0;
+        optSuppressClickUntil = 0;
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      if (state.answers[qid]) return;
+      if (isOptExcluded(qid, k)) {
+        if (!card.classList.contains('focus-card')) setKbFocus(card);
+        setOptExcluded(card, qid, k, false);
+        return;
+      }
+      if (e.target.closest('img')) return;
       if (!card.classList.contains('focus-card')) setKbFocus(card);
       if (r.ans.length > 1) {
         el.classList.toggle('sel');
         const sub = card.querySelector('.psubmit');
         if (sub) sub.disabled = !card.querySelectorAll('.popt.sel').length;
       } else {
-        answerQ(qid, el.dataset.k);
+        answerQ(qid, k);
       }
     };
   });
@@ -5540,6 +5815,7 @@ function bindCard(card) {
 function answerQ(qid, picked) {
   if (state.answers[qid]) return;
   state.answers[qid] = picked;
+  delete state.excluded[qid];
   const r = DATA.find(x => x.qid === qid);
   const card = cardEl(qid);
   if (!card || !r) return;
@@ -5555,10 +5831,15 @@ function answerQ(qid, picked) {
   card.classList.add('is-practiced');
   if (rc.w > 0) card.classList.add('is-wrong');
 
+  const tip = card.querySelector('.parea-tip');
+  if (tip) tip.remove();
+
   const ansSet = new Set(r.ans.split(''));
   card.querySelectorAll('.popt').forEach(el => {
     const k = el.dataset.k;
-    el.classList.remove('sel');
+    el.classList.remove('sel', 'excluded', 'pressing');
+    el.removeAttribute('data-excluded');
+    el.removeAttribute('title');
     el.classList.add('locked');
     const markEl = el.querySelector('.opt-mark');
     if (ansSet.has(k)) {
@@ -5612,6 +5893,7 @@ function answerQ(qid, picked) {
 
 function redoQ(qid) {
   delete state.answers[qid];
+  delete state.excluded[qid];
   const card = cardEl(qid);
   const r = DATA.find(x => x.qid === qid);
   if (!card || !r) return;
@@ -6184,6 +6466,7 @@ if ($('clearProgBtn')) {
     PROG.clearedAt = now;
     PROG.ts = now;
     state.answers = {};
+    state.excluded = {};
     try { localStorage.setItem(PKEY, JSON.stringify(PROG)); } catch (err) {}
     idbSet(PKEY, PROG);
     if (HAS_CLOUD_SYNC && syncConfig && syncConfig.token) {
